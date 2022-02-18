@@ -112,12 +112,11 @@ class TR064 {
         void initServiceURLs();
         void deb_print(String message, int level);
         void deb_println(String message, int level);
-        bool action_raw(const String& service,const String& act, String params[][2], int nParam, const String& url = "");
-        //void takeNonce(String xml);
+        bool action_raw(const String& service,const String& act, String params[][2], int nParam, const String& url = "");       
         // RoSchmi: Addidtional parameter to inject protocol (http or https) 
-        bool httpRequest(const String& url, const String& xml, const String& action, Protocol protocol = Protocol::useHttp, char * outResponse = nullptr, const unsigned int responseLength = 0);
+        bool httpRequest(const String& url, const String& xml, const String& action, Protocol protocol = Protocol::useHttp);
         // RoSchmi: Addidtional parameter to inject protocol (http or https) 
-        bool httpRequest(const String& url, const String& xml, const String& action, bool retry, Protocol protocol = Protocol::useHttp, char * outResponse = nullptr, const unsigned int responseLength = 0);
+        bool httpRequest(const String& url, const String& xml, const String& action, bool retry, Protocol protocol = Protocol::useHttp);
         
         String generateAuthToken();
         String generateAuthXML();

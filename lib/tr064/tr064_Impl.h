@@ -101,10 +101,7 @@ void TR064::initServiceURLs() {
      */
 
     this->_state = TR064_NO_SERVICES;
-    // RoSchmi
-    char payloadBuffer[1] {0};
-    //if(httpRequest(_detectPage, "", "", true)){
-        if(httpRequest(_detectPage, "", "", true, _protocol, (char *)payloadBuffer, sizeof(payloadBuffer)))
+        if(httpRequest(_detectPage, "", "", true, _protocol))
         {
             deb_println("[TR064][initServiceURLs] get the Stream ", DEBUG_INFO);
             int i = 0;
@@ -427,9 +424,9 @@ String TR064::findServiceURL(String service) {
     @return The response from the device.
 */
 /**************************************************************************/
-bool TR064::httpRequest(const String& url, const String& xml, const String& soapaction, Protocol protocol, char * outResponse, const unsigned int responseLength) {
+bool TR064::httpRequest(const String& url, const String& xml, const String& soapaction, Protocol protocol) {
     
-    return httpRequest(url, xml, soapaction, true, protocol, outResponse, responseLength);
+    return httpRequest(url, xml, soapaction, true, protocol);
 }
 
 /**************************************************************************/
@@ -448,7 +445,7 @@ bool TR064::httpRequest(const String& url, const String& xml, const String& soap
     @return The response from the device.
 */
 /**************************************************************************/
-bool TR064::httpRequest(const String& url, const String& xml, const String& soapaction, bool retry, Protocol protocol, char * outResponse, const unsigned int responseLength) {
+bool TR064::httpRequest(const String& url, const String& xml, const String& soapaction, bool retry, Protocol protocol) {
     
     String protocolPrefix = protocol == Protocol::useHttps ? "https://" : "http://";
     
@@ -466,38 +463,10 @@ bool TR064::httpRequest(const String& url, const String& xml, const String& soap
     
     if (protocol == Protocol::useHttps)
     {
-        Serial.println("For secure Transmission");
-        Serial.println(_ip.c_str());
-        Serial.println(usePort);
-        
-        Serial.println(url.c_str());
-        if (protocol == Protocol::useHttps)
-        {
-            Serial.println("UseHttps");
-        }
-        else
-        {
-            Serial.println("UseHttp");
-        }
-
         _instHttp->begin(_sslClient, _ip.c_str(), usePort, url.c_str(), useTls);
     }
     else
     {
-        Serial.println("For normal http Transmission");
-        Serial.println(_ip.c_str());
-        Serial.println(usePort);
-        
-        Serial.println(url.c_str());
-        if (protocol == Protocol::useHttps)
-        {
-            Serial.println("UseHttps");
-        }
-        else
-        {
-            Serial.println("UseHttp");
-        }
-
         _instHttp->begin(_client, _ip.c_str(), usePort, url.c_str(), useTls);
     }
     
