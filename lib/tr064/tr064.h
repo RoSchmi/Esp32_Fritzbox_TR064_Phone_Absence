@@ -65,6 +65,7 @@ typedef enum {
       useHttp,
       useHttps
   } Protocol;
+
 typedef const char* X509Certificate;
 
 
@@ -143,6 +144,7 @@ class TR064 {
         WiFiClient * _streamClient;
 
         Protocol _protocol;
+        
         HTTPClient * _instHttp;
 
         /* TODO: We should give access to this data for users to inspect the
