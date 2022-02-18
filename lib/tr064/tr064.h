@@ -124,7 +124,7 @@ class TR064 {
 
       
 
-        HTTPClient * _instHttp = &http;
+       // HTTPClient * _instHttp = &http;
 
         //TODO: More consistent naming.
         void initServiceURLs();
@@ -156,14 +156,11 @@ class TR064 {
         
         X509Certificate _certificate;
 
-        // WiFiClient _client;
-        // WiFiClientSecure _sslClient;
-
-        // WiFiClient * _streamClient;
+        
 
         Protocol _protocol;
         
-       // HTTPClient * _instHttp;
+      
 
         /* TODO: We should give access to this data for users to inspect the
         * possibilities of their device(s) - see #9 on Github.
@@ -172,6 +169,6 @@ class TR064 {
         String _services[100][2];
 };
 
-    #include "tr064_Impl.h"
+    
 
 #endif

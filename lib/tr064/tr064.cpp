@@ -209,10 +209,12 @@ bool TR064::action(const String& service, const String& act, String params[][2],
     String req[][2] = {{}};
     if(action(service, act, params, nParam, req, 0, url)){
         
-        _instHttp->end();
+        
+        http.end();
         return true;
     }
-        _instHttp->end();     
+      
+         http.end();    
     return false;
 }
 
@@ -280,22 +282,25 @@ bool TR064::action(const String& service, const String& act, String params[][2],
                     deb_println("[TR064][action]<Error> Retrying in 5s", DEBUG_ERROR);
                     delay(5000);
                 }
-                _instHttp->end();                
+               
+                http.end();             
             }
             if (tries >= 3) {
-                deb_println("[TR064][action]<error> Giving up the request ", DEBUG_ERROR);
-                _instHttp->end();
+                deb_println("[TR064][action]<error> Giving up the request ", DEBUG_ERROR);               
+                http.end();
                 return false;
             }
             return action(service, act, params, nParam, req, nReq, url);
         }
         deb_println("[TR064][action] Done.", DEBUG_INFO);
-        _instHttp->end();
+        
+        http.end();
         return true;
         
     }
     deb_println("[TR064][action]<error> Request Failed ", DEBUG_ERROR);
-    _instHttp->end();
+    
+    http.end();
     return false;
 }
 
@@ -474,7 +479,7 @@ bool TR064::httpRequest(const String& url, const String& xml, const String& soap
     
     deb_println("[HTTP] prepare request to URL: " + protocolPrefix + _ip + ":" + usePort + url, DEBUG_INFO);
 
-    _instHttp->setReuse(true);
+    http.setReuse(true);
 
     if (protocol == Protocol::useHttps)
     {   
@@ -638,7 +643,7 @@ bool TR064::xmlTakeParam(String (*params)[2], int nParam, Protocol protocol) {
     WiFiClient * stream = tr064ClientPtr;
      
     while(stream->connected()) {  
-        if(!_instHttp->connected()) {
+        if(!http.connected()) {
             deb_println("[TR064][xmlTakeParam] http connection lost", DEBUG_INFO);
             return false;                      
         }        
