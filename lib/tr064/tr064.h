@@ -38,10 +38,53 @@
 #endif
 
 /// HTTP codes see RFC7231
+typedef enum {
+    
+     //TR064_CODE_UNAUTHORIZED = 401, //If a user is not authenticated, 401 (“Unauthorized”) will be returned.
+     TR064_CODE_UNKNOWNACTION = 401, ////If an unknown action is used the returned code is 401. This return code is used for obsoleted actions, too. 
+     TR064_CODE_FALSEARGUMENTS = 402, //If a user is not authenticated, 401 (“Unauthorized”) will be returned.
+     TR064_CODE_ACTIONNOTAUTHORIZED = 606, //If a user is authenticated but has not the needed rights, 606 (“Action not authorized”) will be returned
+     TR064_CODE_SECONDFACTORAUTHREQUIRED = 866, //If an action needs 2FA, the status code 866 (“second factor authentication required”)
+     TR064_CODE_SECONDFACTORAUTHBLOCKED = 867, // (“second factor authentication blocked”) or 
+     TR064_CODE_SECONDFACTORAUTHBUSY = 868, // (“second factorauthentication busy”) will be returned and the 2FA procedure    
+} t_tr064_codes;
 
+typedef enum {
+      useHttp,
+      useHttps
+  } Protocol;
 
+typedef const char* X509Certificate;
 
-enum tr064_codes{          
+#define arr_len( x )  ( sizeof( x ) / sizeof( *x ) ) ///< Gives the length of an array
+
+// Possible values for client.state()
+#define TR064_NO_SERVICES           -1 ///< No Service actions will not execute
+#define TR064_SERVICES_LOADED       0 ///< Service loaded
+
+/**************************************************************************/
+/*! 
+    @brief Class to easily make TR-064 calls. This is the main class
+             of this library. An object of this class keeps track of
+             
+*/
+/**************************************************************************/
+
+class TR064 { 
+    public:
+        /*!  Different debug level
+         *   DEBUG_NONE         ///< Print no debug messages whatsoever
+         *   DEBUG_ERROR        ///< Only print error messages
+         *   DEBUG_WARNING      ///< Only print error and warning messages
+         *   DEBUG_INFO         ///< Print error, warning and info messages
+         *   DEBUG_VERBOSE      ///< Print all messages
+         */
+        enum LoggingLevels {DEBUG_NONE, DEBUG_ERROR, DEBUG_WARNING, DEBUG_INFO, DEBUG_VERBOSE}; 
+        
+        /// HTTP codes see RFC7231
+        enum tr064_codes{
+            
+            //TR064_CODE_UNAUTHORIZED = 401, //If a user is not authenticated, 401 (“Unauthorized”) will be returned.
             TR064_CODE_UNKNOWNACTION = 401, ////If an unknown action is used the returned code is 401. This return code is used for obsoleted actions, too. 
             TR064_CODE_FALSEARGUMENTS = 402, //If a user is not authenticated, 401 (“Unauthorized”) will be returned.
             TR064_CODE_AUTHFAILED = 503, //If a user is not authenticated, 401 (“Unauthorized”) will be returned.
@@ -55,47 +98,10 @@ enum tr064_codes{
             TR064_CODE_SECONDFACTORAUTHBUSY = 868, // (“second factorauthentication busy”) will be returned and the 2FA procedure    
         } ;
 
-#define arr_len( x )  ( sizeof( x ) / sizeof( *x ) ) ///< Gives the length of an array
-
-// Possible values for client.state()
-#define TR064_NO_SERVICES           -1 ///< No Service actions will not execute
-#define TR064_SERVICES_LOADED       0 ///< Service loaded
-
-typedef enum {
-      useHttp,
-      useHttps
-  } Protocol;
-
-typedef const char* X509Certificate;
-
-
-/**************************************************************************/
-/*! 
-    @brief Class to easily make TR-064 calls. This is the main class
-             of this library. An object of this class keeps track of
-             
-*/
-/**************************************************************************/
-
-class TR064 {
- 
-    
-    public:
-        /*!  Different debug level
-         *   DEBUG_NONE         ///< Print no debug messages whatsoever
-         *   DEBUG_ERROR        ///< Only print error messages
-         *   DEBUG_WARNING      ///< Only print error and warning messages
-         *   DEBUG_INFO         ///< Print error, warning and info messages
-         *   DEBUG_VERBOSE      ///< Print all messages
-         */
-        enum LoggingLevels {DEBUG_NONE, DEBUG_ERROR, DEBUG_WARNING, DEBUG_INFO, DEBUG_VERBOSE}; 
-        
-        // Overloaded constructor to use either WiFiClient or WiFiClientSecure 
-        // TR064(int port, String ip, String user, String pass, Protocol protocol, WiFiClient pClient, HTTPClient * httpClient, X509Certificate pCertificate);
-        // TR064(int port, String ip, String user, String pass, Protocol protocol, WiFiClientSecure pClient, HTTPClient * httpClient, X509Certificate pCertificate);
-
-         TR064(int port, String ip, String user, String pass, Protocol protocol = Protocol::useHttp, X509Certificate pCertificate = nullptr);
-
+        TR064();
+        TR064(uint16_t port, const String& ip, const String& user, const String& pass, Protocol protocol = Protocol::useHttp, X509Certificate pCertificate = nullptr);
+        ~TR064() {}
+        TR064& setServer(uint16_t port, const String& ip, const String& user, const String& pass, Protocol protocol, X509Certificate certificate);
 
         void init();
         void initNonce();
@@ -124,7 +130,7 @@ class TR064 {
 
       
 
-       // HTTPClient * _instHttp = &http;
+       
 
         //TODO: More consistent naming.
         void initServiceURLs();

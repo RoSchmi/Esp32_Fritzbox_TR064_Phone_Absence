@@ -34,7 +34,7 @@
 
 
 #include "tr064.h"
-#include "config.h"
+
 
 /**************************************************************************/
 /*! 
@@ -50,47 +50,38 @@
                 Password to be used to establish the TR-064 connection.
 */
 /**************************************************************************/
-/*
-TR064::TR064(int port, String ip, String user, String pass, Protocol protocol, WiFiClient pClient, HTTPClient * pHttp, X509Certificate pCertificate) {
-    _certificate = pCertificate;
-    _instHttp = pHttp;
-    _protocol = protocol;
-    _port = port;  
-    _client = pClient;
-    _streamClient = &pClient;
+TR064::TR064(uint16_t port, const String& ip, const String& user, const String& pass, Protocol protocol, X509Certificate certificate) { 
+    _port = port;
     _ip = ip;
     _user = user;
-    _pass = pass;  
+    _pass = pass;
+    debug_level = DEBUG_NONE;
     this->_state = TR064_NO_SERVICES;
-}
-*/
-
-//TR064::TR064(int port, String ip, String user, String pass, Protocol protocol, WiFiClientSecure pClient, HTTPClient * pHttp, X509Certificate pCertificate) {
-TR064::TR064(int port, String ip, String user, String pass, Protocol protocol, X509Certificate pCertificate) { 
-    _certificate = pCertificate;
-    _protocol = protocol;
-    _port = port;  
+    _certificate = certificate;
+    _protocol = protocol;  
     if (protocol == Protocol::useHttps)
     {
-        tr064SslClient.setCACert(pCertificate);
+        tr064SslClient.setCACert(certificate);
         tr064ClientPtr = &tr064SslClient;       
     }
     else
     {
         tr064ClientPtr = &tr064SimpleClient;
-    }
-
-
-    //_instHttp = pHttp;
-       
-    //_sslClient = pClient;
-    //_sslClient.setCACert(_certificate);
-    //_streamClient = &pClient;  
-    _ip = ip;
-    _user = user;
-    _pass = pass;  
-    this->_state = TR064_NO_SERVICES;
+    }  
 }
+
+/**************************************************************************/
+
+/*! 
+    @brief  Library/Class to easily make TR-064 calls. Do not construct this
+            unless you have a working connection to the device!   
+*/
+/**************************************************************************/
+TR064::TR064() {
+   debug_level = DEBUG_NONE;
+   this->_state = TR064_NO_SERVICES;
+}
+
 
 /**************************************************************************/
 /*!
@@ -103,6 +94,41 @@ void TR064::init() {
     // Get a list of all services and the associated urls
     initServiceURLs();  
 }
+
+
+/**************************************************************************/
+/*!
+    @brief  Set the server parameters, needed if the empty constructor was used.
+    @return Reference to this object
+    @param    port
+                Port number to be used to establish the TR-064 connection.
+    @param    ip
+                IP address to be used to establish the TR-064 connection.
+    @param    user
+                User name to be used to establish the TR-064 connection.
+    @param    pass
+                Password to be used to establish the TR-064 connection.
+*/
+/**************************************************************************/
+TR064& TR064::setServer(uint16_t port, const String& ip, const String& user, const String& pass, Protocol protocol, X509Certificate certificate){
+    this->_ip = ip;
+    this->_port = port;
+    this->_user = user;
+    this->_pass = pass; 
+    _certificate = certificate;
+    _protocol = protocol;  
+    if (protocol == Protocol::useHttps)
+    {
+        tr064SslClient.setCACert(certificate);
+        tr064ClientPtr = &tr064SslClient;       
+    }
+    else
+    {
+        tr064ClientPtr = &tr064SimpleClient;
+    }
+    return *this;
+}
+
 
 /**************************************************************************/
 /*!
