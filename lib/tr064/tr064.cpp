@@ -470,11 +470,12 @@ String TR064::findServiceURL(String service) {
     @return The response from the device.
 */
 /**************************************************************************/
+/*
 bool TR064::httpRequest(const String& url, const String& xml, const String& soapaction, Protocol protocol) {
     
     return httpRequest(url, xml, soapaction, true, protocol);
 }
-
+*/
 /**************************************************************************/
 /*!
     @brief  Transmits a http-Request to the given url (relative to _ip on _port)
@@ -625,7 +626,7 @@ bool TR064::httpRequest(const String& url, const String& xml, const String& soap
     @return The calculated MD5 hash (as `String`).
 */
 /**************************************************************************/
-String TR064::md5String(String text){
+String TR064::md5String(const String& text){
     byte bbuff[16];
     String hash = "";
     MD5Builder nonce_md5; 
@@ -813,9 +814,11 @@ String TR064::xmlTakeParam(String inStr, String needParam) {
     @return The content of the requested XML tag (as `String`).
 */
 /**************************************************************************/
+/*
 String TR064::xmlTakeSensitiveParam(String inStr, String needParam) {
     return _xmlTakeParam(inStr, needParam);
 }
+*/
 
 /**************************************************************************/
 /*!
@@ -831,12 +834,14 @@ String TR064::xmlTakeSensitiveParam(String inStr, String needParam) {
     @return The content of the requested XML tag (as `String`).
 */
 /**************************************************************************/
+/*
 String TR064::xmlTakeInsensitiveParam(String inStr,String needParam) {
     needParam.toLowerCase();
     String instr = inStr;
     instr.toLowerCase();
     return _xmlTakeParam(instr, needParam);
 }
+*/
 
 /**************************************************************************/
 /*!
@@ -849,6 +854,7 @@ String TR064::xmlTakeInsensitiveParam(String inStr,String needParam) {
     @return The content of the requested XML tag (as `String`).
 */
 /**************************************************************************/
+/*
 String TR064::_xmlTakeParam(String inStr, String needParam) {
    int indexStart = inStr.indexOf("<"+needParam+">");
    int indexStop = inStr.indexOf("</"+needParam+">");  
@@ -859,6 +865,7 @@ String TR064::_xmlTakeParam(String inStr, String needParam) {
     //TODO: Proper error-handling? See also #12 on github
     return "";
 }
+*/
 
 /**************************************************************************/
 /*!
@@ -869,7 +876,7 @@ String TR064::_xmlTakeParam(String inStr, String needParam) {
                 The minimally required debug level.
 */
 /**************************************************************************/
-void TR064::deb_print(String message, int level) {
+void TR064::deb_print(const String& message, int level) {
     if (Serial) {
         if (debug_level >= level) {
             Serial.print(message);
@@ -888,7 +895,7 @@ void TR064::deb_print(String message, int level) {
                 The minimally required debug level.
 */
 /**************************************************************************/
-void TR064::deb_println(String message, int level) {
+void TR064::deb_println(const String& message, int level) {
     if (Serial) {
         if (debug_level >= level) {
             Serial.println(message);

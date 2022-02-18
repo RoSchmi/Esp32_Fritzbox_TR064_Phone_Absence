@@ -102,50 +102,36 @@ class TR064 {
         TR064(uint16_t port, const String& ip, const String& user, const String& pass, Protocol protocol = Protocol::useHttp, X509Certificate pCertificate = nullptr);
         ~TR064() {}
         TR064& setServer(uint16_t port, const String& ip, const String& user, const String& pass, Protocol protocol, X509Certificate certificate);
-
         void init();
-        void initNonce();
+        int state();
+
         bool action(const String& service, const String& act, String params[][2] = {}, int nParam = 0,const String& url = "");
         bool action(const String& service, const String& act, String params[][2], int nParam, String (*req)[2], int nReq, const String& url = "");
-        bool xmlTakeParam(String (*params)[2], int nParam, Protocol takeProtocol = Protocol::useHttp);       
-        bool xmlTakeParam(String& value, const String& needParam, Protocol takeProtocol = Protocol::useHttp);
-         
-        String xmlTakeInsensitiveParam(String inStr, String needParam);
-        String xmlTakeSensitiveParam(String inStr, String needParam);
-        String cleanOldServiceName(const String& service);
-        String errorToString(int error);
-        String md5String(String s);
+        
+        String md5String(const String& s);
         String byte2hex(byte number);
         int debug_level; ///< Available levels are `DEBUG_NONE`, `DEBUG_ERROR`, `DEBUG_WARNING`, `DEBUG_INFO`, and `DEBUG_VERBOSE`.
-        
+       
     private:
         WiFiClient tr064SimpleClient;
         WiFiClientSecure tr064SslClient;
-
         WiFiClient * tr064ClientPtr;
-
         HTTPClient http;
 
-        
-
-      
-
-       
-
         //TODO: More consistent naming.
+
         void initServiceURLs();
-        void deb_print(String message, int level);
-        void deb_println(String message, int level);
-        bool action_raw(const String& service,const String& act, String params[][2], int nParam, const String& url = "");       
-        // RoSchmi: Addidtional parameter to inject protocol (http or https) 
-        bool httpRequest(const String& url, const String& xml, const String& action, Protocol protocol = Protocol::useHttp);
-        // RoSchmi: Addidtional parameter to inject protocol (http or https) 
+        void deb_print(const String& message, int level);
+        void deb_println(const String& message, int level);
+        bool action_raw(const String& service,const String& act, String params[][2], int nParam, const String& url = "");               
         bool httpRequest(const String& url, const String& xml, const String& action, bool retry, Protocol protocol = Protocol::useHttp);
-        
         String generateAuthToken();
         String generateAuthXML();
         String findServiceURL(String service);
-        String _xmlTakeParam(String inStr, String needParam);
+        String cleanOldServiceName(const String& service);
+        bool xmlTakeParam(String (*params)[2], int nParam, Protocol protocol = Protocol::useHttp);
+        bool xmlTakeParam(String& value, const String& needParam, Protocol protocol = Protocol::useHttp);       
+        String errorToString(int error);
 
         int _state;
         String _ip;
@@ -156,25 +142,20 @@ class TR064 {
         String _secretH; //to be generated
         String _nonce = "";
         String _status;
-        const String _requestStart = "<?xml version=\"1.0\"?><s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">";
-        const String _detectPage = "/tr64desc.xml";
-        const char* const _servicePrefix = "urn:dslforum-org:service:";
-        
         X509Certificate _certificate;
-
-        
-
         Protocol _protocol;
-        
-      
 
-        /* TODO: We should give access to this data for users to inspect the
+        const char* const _requestStart = "<?xml version=\"1.0\"?><s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">";
+        const char* const _detectPage = "/tr64desc.xml";
+        const char* const _servicePrefix = "urn:dslforum-org:service:";
+        unsigned long lastOutActivity;
+        unsigned long lastInActivity;
+        /*
+            * TODO: We should give access to this data for users to inspect the
         * possibilities of their device(s) - see #9 on Github.
-        TODO: Remove 100 services limits here
+        * TODO: Remove 100 services limits here
         */
         String _services[100][2];
 };
-
-    
 
 #endif
