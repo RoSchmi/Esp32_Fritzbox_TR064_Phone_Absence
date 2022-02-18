@@ -120,8 +120,7 @@ void TR064::initServiceURLs() {
         {
             deb_println("[TR064][initServiceURLs] get the Stream ", DEBUG_INFO);
             int i = 0;
-            while(1) {
-                //if(!_instHttp->connected()) {
+            while(1) {              
                 if(!http.connected()) {   
                     deb_println("[TR064][initServiceURLs] xmlTakeParam : http connection lost", DEBUG_INFO);
                     break;                      
@@ -140,15 +139,15 @@ void TR064::initServiceURLs() {
                     break;
                 }
             }            
-            deb_println("[TR064][initServiceURLs] message: reading done", DEBUG_INFO);                 
-            
+            deb_println("[TR064][initServiceURLs] message: reading done", DEBUG_INFO);                    
     } 
     else {  
         deb_println("[TR064][initServiceURLs]<Error> initServiceUrls failed", DEBUG_ERROR);  
         return;      
     }
     this->_state = TR064_SERVICES_LOADED;
-    _instHttp->end();
+    
+    http.end();
 }
 
 /**************************************************************************/
@@ -477,46 +476,25 @@ bool TR064::httpRequest(const String& url, const String& xml, const String& soap
 
     _instHttp->setReuse(true);
 
-    
-    
-    //_instHttp->begin(&tr064Client, _ip.c_str(), usePort, url.c_str(), useTls);
-    
-    
     if (protocol == Protocol::useHttps)
     {   
-        http.begin(tr064SslClient, _ip.c_str(), usePort, url.c_str(), useTls);
-        //httpSecure.begin(&tr064SslClient, _ip.c_str(), usePort, url.c_str(), useTls);
-        //http.begin(&tr064SslClient, _ip.c_str(), usePort, url.c_str(), useTls);
-        //_instHttp->begin(&tr064SslClient, _ip.c_str(), usePort, url.c_str(), useTls);
-        //_instHttp->begin(_sslClient, _ip.c_str(), usePort, url.c_str(), useTls);
+        http.begin(tr064SslClient, _ip.c_str(), usePort, url.c_str(), useTls);       
     }
     else
     {
-        http.begin(tr064SimpleClient, _ip.c_str(), usePort, url.c_str(), useTls);
-        //http.begin(&tr064SimpleClient, _ip.c_str(), usePort, url.c_str(), useTls);
-        //_instHttp->begin(&tr064SimpleClient, _ip.c_str(), usePort, url.c_str(), useTls);
-        //_instHttp->begin(_client, _ip.c_str(), usePort, url.c_str(), useTls);
+        http.begin(tr064SimpleClient, _ip.c_str(), usePort, url.c_str(), useTls);        
     }
     
      http.addHeader("ACCEPT-ENCODING", "chunked");
-    //_instHttp->addHeader("ACCEPT-ENCODING", "chunked");
     
-    /*
-    if (soapaction != "") {  
-        _instHttp->addHeader("CONTENT-TYPE", "text/xml"); //; charset=\"utf-8\"
-        _instHttp->addHeader("SOAPACTION", soapaction);
-    }
-    */
    if (soapaction != "") {  
         http.addHeader("CONTENT-TYPE", "text/xml"); //; charset=\"utf-8\"
         http.addHeader("SOAPACTION", soapaction);
     }
-    
-    //_instHttp->setAuthorization(_user.c_str(), _pass.c_str());
      
     // Added by RoSchmi
     //
-    http.setConnectTimeout(1200); 
+    http.setConnectTimeout(2000); 
 
     // start connection and send HTTP header
     int httpCode=0;
@@ -524,18 +502,16 @@ bool TR064::httpRequest(const String& url, const String& xml, const String& soap
         deb_println("[HTTP] Posting XML:", DEBUG_VERBOSE);
         deb_println("---------------------------------", DEBUG_VERBOSE);
         deb_println(xml, DEBUG_VERBOSE);
-        deb_println("---------------------------------\n", DEBUG_VERBOSE);  
-        //httpCode = _instHttp->POST(xml);
+        deb_println("---------------------------------\n", DEBUG_VERBOSE);        
         httpCode = http.POST(xml);
         deb_println("[HTTP] POST... SOAPACTION: '" + soapaction + "'", DEBUG_INFO);
-    } else {   
-        //httpCode = _instHttp->GET();
+    } else {         
         httpCode = http.GET();
         deb_println("[HTTP] GET...", DEBUG_INFO);
     }
       
     String payload = "";
-    // httpCode will be negative on error
+    
     if (httpCode > 0) 
     {
         // HTTP header has been sent and Server response header has been handled
@@ -658,34 +634,18 @@ String TR064::byte2hex(byte number){
 */
 /**************************************************************************/
 bool TR064::xmlTakeParam(String (*params)[2], int nParam, Protocol protocol) {
-    WiFiClient * stream = tr064ClientPtr;
-    
-    //WiFiClient * stream = &_client;
-    
-    /*
-    if (protocol == Protocol::useHttps)
-    {
-        stream= &_sslClient;
-    }
-    */
-    
-    /*
-    stream->setTimeout(40);
-    stream->Stream::setTimeout(40);
-    */
 
-    // RoSchmi  
+    WiFiClient * stream = tr064ClientPtr;
+     
     while(stream->connected()) {  
         if(!_instHttp->connected()) {
             deb_println("[TR064][xmlTakeParam] http connection lost", DEBUG_INFO);
             return false;                      
-        }
-         
+        }        
         if(stream->find("<")){
             const String htmltag = stream->readStringUntil('>');
             const String value = stream->readStringUntil('<');
             deb_println("[TR064][xmlTakeParam] htmltag: "+htmltag, DEBUG_VERBOSE);
-
             if (nParam > 0) {
                 for (uint16_t i=0; i<nParam; ++i) {
                     if(htmltag.equalsIgnoreCase(params[i][0])){
@@ -717,8 +677,7 @@ bool TR064::xmlTakeParam(String (*params)[2], int nParam, Protocol protocol) {
             }
             if(htmltag.equalsIgnoreCase("errorDescription")){
                 deb_println("[TR064][xmlTakeParam] <TR064> Failed, errorDescription: " + value, DEBUG_VERBOSE);
-            }
-            
+            }        
         }else{
             break;    
         }
