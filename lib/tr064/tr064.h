@@ -91,8 +91,12 @@ class TR064 {
         enum LoggingLevels {DEBUG_NONE, DEBUG_ERROR, DEBUG_WARNING, DEBUG_INFO, DEBUG_VERBOSE}; 
         
         // Overloaded constructor to use either WiFiClient or WiFiClientSecure 
-        TR064(int port, String ip, String user, String pass, Protocol protocol, WiFiClient pClient, HTTPClient * httpClient, X509Certificate pCertificate);
-        TR064(int port, String ip, String user, String pass, Protocol protocol, WiFiClientSecure pClient, HTTPClient * httpClient, X509Certificate pCertificate);
+        // TR064(int port, String ip, String user, String pass, Protocol protocol, WiFiClient pClient, HTTPClient * httpClient, X509Certificate pCertificate);
+        // TR064(int port, String ip, String user, String pass, Protocol protocol, WiFiClientSecure pClient, HTTPClient * httpClient, X509Certificate pCertificate);
+
+         TR064(int port, String ip, String user, String pass, Protocol protocol = Protocol::useHttp, X509Certificate pCertificate = nullptr);
+
+
         void init();
         void initNonce();
         bool action(const String& service, const String& act, String params[][2] = {}, int nParam = 0,const String& url = "");
@@ -109,6 +113,19 @@ class TR064 {
         int debug_level; ///< Available levels are `DEBUG_NONE`, `DEBUG_ERROR`, `DEBUG_WARNING`, `DEBUG_INFO`, and `DEBUG_VERBOSE`.
         
     private:
+        WiFiClient tr064SimpleClient;
+        WiFiClientSecure tr064SslClient;
+
+        WiFiClient * tr064ClientPtr;
+
+        HTTPClient http;
+
+        
+
+      
+
+        HTTPClient * _instHttp = &http;
+
         //TODO: More consistent naming.
         void initServiceURLs();
         void deb_print(String message, int level);
@@ -137,15 +154,16 @@ class TR064 {
         const String _detectPage = "/tr64desc.xml";
         const char* const _servicePrefix = "urn:dslforum-org:service:";
         
-        X509Certificate _certificate; 
-        WiFiClient _client;
-        WiFiClientSecure _sslClient;
+        X509Certificate _certificate;
 
-        WiFiClient * _streamClient;
+        // WiFiClient _client;
+        // WiFiClientSecure _sslClient;
+
+        // WiFiClient * _streamClient;
 
         Protocol _protocol;
         
-        HTTPClient * _instHttp;
+       // HTTPClient * _instHttp;
 
         /* TODO: We should give access to this data for users to inspect the
         * possibilities of their device(s) - see #9 on Github.

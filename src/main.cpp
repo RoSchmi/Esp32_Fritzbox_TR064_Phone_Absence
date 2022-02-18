@@ -34,8 +34,8 @@
 // Patch: Replace C:\Users\thisUser\.platformio\packages\framework-arduinoespressif32\cores\esp32\main.cpp
 // with the file 'main.cpp' from folder 'patches' of this repository, then use the following code to configure stack size
 #if !(USING_DEFAULT_ARDUINO_LOOP_STACK_SIZE)
-  uint16_t USER_CONFIG_ARDUINO_LOOP_STACK_SIZE = 8192;
-  //uint16_t USER_CONFIG_ARDUINO_LOOP_STACK_SIZE = 16384;
+  //uint16_t USER_CONFIG_ARDUINO_LOOP_STACK_SIZE = 8192;
+  uint16_t USER_CONFIG_ARDUINO_LOOP_STACK_SIZE = 16384;
   
 #endif
 
@@ -51,16 +51,18 @@ typedef struct HostsResponse
 
 X509Certificate myX509Certificate = myfritzbox_root_ca;
 
+
 #if TRANSPORT_PROTOCOL == 1
-    static WiFiClientSecure wifi_client;
+    //static WiFiClientSecure wifi_client;
     Protocol protocol = Protocol::useHttps;
   #else
-    static WiFiClient wifi_client;
+    //static WiFiClient wifi_client;
     Protocol protocol = Protocol::useHttp;
 #endif
-  
+/*
 HTTPClient http;
 static HTTPClient * httpPtr = &http;
+*/
 
 WiFiMulti wiFiMulti;
  
@@ -91,7 +93,12 @@ const char* IP = FRITZ_IP_ADDRESS;
 // -------------------------------------------------------------------------------------
  
 // TR-064 connection
-TR064 connection(PORT, IP, fuser, fpass, protocol, wifi_client, httpPtr, myX509Certificate);
+// TR064 connection(PORT, IP, fuser, fpass, protocol, wifi_client, httpPtr, myX509Certificate);
+#if TRANSPORT_PROTOCOL == 1
+    TR064 connection(PORT, IP, fuser, fpass, protocol, myX509Certificate);
+#else
+    TR064 connection(PORT, IP, fuser, fpass);
+#endif
 
 // Die AIN der DECT!200 Steckdose findet sich im FritzBox Webinterface
 // oder auf dem Gerät selbst

@@ -21,7 +21,7 @@
 #define DEBUG_VERBOSE 4     ///< Print all messages
 
 // Choose used debug level here
-#define SELECTED_DEBUG_LEVEL    DEBUG_ERROR
+#define SELECTED_DEBUG_LEVEL    DEBUG_VERBOSE
 
 #define POWER_MEASURE_READINTERVAL_MS  10 * 1000   // Read Fritz!DECT power sensor using this interval
 

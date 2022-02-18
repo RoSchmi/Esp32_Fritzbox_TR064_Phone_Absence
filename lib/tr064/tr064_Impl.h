@@ -50,6 +50,7 @@
                 Password to be used to establish the TR-064 connection.
 */
 /**************************************************************************/
+/*
 TR064::TR064(int port, String ip, String user, String pass, Protocol protocol, WiFiClient pClient, HTTPClient * pHttp, X509Certificate pCertificate) {
     _certificate = pCertificate;
     _instHttp = pHttp;
@@ -62,15 +63,29 @@ TR064::TR064(int port, String ip, String user, String pass, Protocol protocol, W
     _pass = pass;  
     this->_state = TR064_NO_SERVICES;
 }
+*/
 
-TR064::TR064(int port, String ip, String user, String pass, Protocol protocol, WiFiClientSecure pClient, HTTPClient * pHttp, X509Certificate pCertificate) {
+//TR064::TR064(int port, String ip, String user, String pass, Protocol protocol, WiFiClientSecure pClient, HTTPClient * pHttp, X509Certificate pCertificate) {
+TR064::TR064(int port, String ip, String user, String pass, Protocol protocol, X509Certificate pCertificate) { 
     _certificate = pCertificate;
-    _instHttp = pHttp;
     _protocol = protocol;
-    _port = port;     
-    _sslClient = pClient;
-    _sslClient.setCACert(_certificate);
-    _streamClient = &pClient;  
+    _port = port;  
+    if (protocol == Protocol::useHttps)
+    {
+        tr064SslClient.setCACert(pCertificate);
+        tr064ClientPtr = &tr064SslClient;       
+    }
+    else
+    {
+        tr064ClientPtr = &tr064SimpleClient;
+    }
+
+
+    //_instHttp = pHttp;
+       
+    //_sslClient = pClient;
+    //_sslClient.setCACert(_certificate);
+    //_streamClient = &pClient;  
     _ip = ip;
     _user = user;
     _pass = pass;  
@@ -106,7 +121,8 @@ void TR064::initServiceURLs() {
             deb_println("[TR064][initServiceURLs] get the Stream ", DEBUG_INFO);
             int i = 0;
             while(1) {
-                if(!_instHttp->connected()) {
+                //if(!_instHttp->connected()) {
+                if(!http.connected()) {   
                     deb_println("[TR064][initServiceURLs] xmlTakeParam : http connection lost", DEBUG_INFO);
                     break;                      
                 }
@@ -460,27 +476,47 @@ bool TR064::httpRequest(const String& url, const String& xml, const String& soap
     deb_println("[HTTP] prepare request to URL: " + protocolPrefix + _ip + ":" + usePort + url, DEBUG_INFO);
 
     _instHttp->setReuse(true);
+
+    
+    
+    //_instHttp->begin(&tr064Client, _ip.c_str(), usePort, url.c_str(), useTls);
+    
     
     if (protocol == Protocol::useHttps)
-    {
-        _instHttp->begin(_sslClient, _ip.c_str(), usePort, url.c_str(), useTls);
+    {   
+        http.begin(tr064SslClient, _ip.c_str(), usePort, url.c_str(), useTls);
+        //httpSecure.begin(&tr064SslClient, _ip.c_str(), usePort, url.c_str(), useTls);
+        //http.begin(&tr064SslClient, _ip.c_str(), usePort, url.c_str(), useTls);
+        //_instHttp->begin(&tr064SslClient, _ip.c_str(), usePort, url.c_str(), useTls);
+        //_instHttp->begin(_sslClient, _ip.c_str(), usePort, url.c_str(), useTls);
     }
     else
     {
-        _instHttp->begin(_client, _ip.c_str(), usePort, url.c_str(), useTls);
+        http.begin(tr064SimpleClient, _ip.c_str(), usePort, url.c_str(), useTls);
+        //http.begin(&tr064SimpleClient, _ip.c_str(), usePort, url.c_str(), useTls);
+        //_instHttp->begin(&tr064SimpleClient, _ip.c_str(), usePort, url.c_str(), useTls);
+        //_instHttp->begin(_client, _ip.c_str(), usePort, url.c_str(), useTls);
     }
     
-    _instHttp->addHeader("ACCEPT-ENCODING", "chunked");
-
+     http.addHeader("ACCEPT-ENCODING", "chunked");
+    //_instHttp->addHeader("ACCEPT-ENCODING", "chunked");
+    
+    /*
     if (soapaction != "") {  
         _instHttp->addHeader("CONTENT-TYPE", "text/xml"); //; charset=\"utf-8\"
         _instHttp->addHeader("SOAPACTION", soapaction);
+    }
+    */
+   if (soapaction != "") {  
+        http.addHeader("CONTENT-TYPE", "text/xml"); //; charset=\"utf-8\"
+        http.addHeader("SOAPACTION", soapaction);
     }
     
     //_instHttp->setAuthorization(_user.c_str(), _pass.c_str());
      
     // Added by RoSchmi
-    _instHttp->setConnectTimeout(1200); 
+    //
+    http.setConnectTimeout(1200); 
 
     // start connection and send HTTP header
     int httpCode=0;
@@ -489,10 +525,12 @@ bool TR064::httpRequest(const String& url, const String& xml, const String& soap
         deb_println("---------------------------------", DEBUG_VERBOSE);
         deb_println(xml, DEBUG_VERBOSE);
         deb_println("---------------------------------\n", DEBUG_VERBOSE);  
-        httpCode = _instHttp->POST(xml);
+        //httpCode = _instHttp->POST(xml);
+        httpCode = http.POST(xml);
         deb_println("[HTTP] POST... SOAPACTION: '" + soapaction + "'", DEBUG_INFO);
     } else {   
-        httpCode = _instHttp->GET();
+        //httpCode = _instHttp->GET();
+        httpCode = http.GET();
         deb_println("[HTTP] GET...", DEBUG_INFO);
     }
       
@@ -521,7 +559,8 @@ bool TR064::httpRequest(const String& url, const String& xml, const String& soap
                         deb_println("[TR064][httpRequest] <Error> Failed, description: '" + req[1][1] + "'", DEBUG_VERBOSE);
                     }
                 }
-                _instHttp->end();
+                //_instHttp->end();
+                http.end();
         
                 if (retry) 
                 {
@@ -543,9 +582,11 @@ bool TR064::httpRequest(const String& url, const String& xml, const String& soap
     {
         // Error
         // TODO: Proper error-handling? See also #12 on github    
-        String httperr = _instHttp->errorToString(httpCode).c_str();
+        //String httperr = _instHttp->errorToString(httpCode).c_str();
+        String httperr = http.errorToString(httpCode).c_str();
         deb_println("[HTTP]<Error> Failed, message: '" + httperr + "'", DEBUG_ERROR);      
-        _instHttp->end();
+        //_instHttp->end();
+        http.end();
         
         if (retry) 
         {
@@ -617,27 +658,29 @@ String TR064::byte2hex(byte number){
 */
 /**************************************************************************/
 bool TR064::xmlTakeParam(String (*params)[2], int nParam, Protocol protocol) {
-    //WiFiClient * stream = &tr064client;
+    WiFiClient * stream = tr064ClientPtr;
     
-    WiFiClient * stream = &_client;
-
+    //WiFiClient * stream = &_client;
+    
+    /*
     if (protocol == Protocol::useHttps)
     {
         stream= &_sslClient;
     }
-
+    */
     
     /*
     stream->setTimeout(40);
     stream->Stream::setTimeout(40);
     */
 
-       
-    while(stream->connected()) {
+    // RoSchmi  
+    while(stream->connected()) {  
         if(!_instHttp->connected()) {
             deb_println("[TR064][xmlTakeParam] http connection lost", DEBUG_INFO);
             return false;                      
-        }      
+        }
+         
         if(stream->find("<")){
             const String htmltag = stream->readStringUntil('>');
             const String value = stream->readStringUntil('<');
@@ -679,6 +722,7 @@ bool TR064::xmlTakeParam(String (*params)[2], int nParam, Protocol protocol) {
         }else{
             break;    
         }
+        
     }
     return true;
 }
@@ -698,17 +742,19 @@ bool TR064::xmlTakeParam(String (*params)[2], int nParam, Protocol protocol) {
 /**************************************************************************/
 bool TR064::xmlTakeParam(String& value, const String& needParam, Protocol protocol) {
     // Initial
-    //WiFiClient * stream = &tr064client;
+    WiFiClient * stream = tr064ClientPtr;
     //WiFiClient * stream = &_client;
 
    // WiFiClient * stream = _streamClient;
     
+    /*
     WiFiClient * stream = &_client;
 
     if (protocol == Protocol::useHttps)
     {
         stream= &_sslClient;
     }
+    */
     
 
     
@@ -721,7 +767,8 @@ bool TR064::xmlTakeParam(String& value, const String& needParam, Protocol protoc
     */
      
     while(stream->connected()) {
-        if(!_instHttp->connected()) {
+        //if(!_instHttp->connected()) {
+        if(!http.connected()) {  
             deb_println("[TR064][xmlTakeParam] http connection lost", DEBUG_INFO);
             return false;                      
         }
