@@ -618,14 +618,14 @@ String TR064::byte2hex(byte number){
 /**************************************************************************/
 bool TR064::xmlTakeParam(String (*params)[2], int nParam, Protocol protocol) {
     //WiFiClient * stream = &tr064client;
-
-    #if TRANSPORT_PROTOCOL == 1
-        //WiFiClientSecure * stream = &_sslClient;
-       WiFiClient *  stream = &_sslClient;
-    #else
-    WiFiClient * stream = &_client;
     
-    #endif
+    WiFiClient * stream = &_client;
+
+    if (protocol == Protocol::useHttps)
+    {
+        stream= &_sslClient;
+    }
+
     
     /*
     stream->setTimeout(40);
@@ -696,22 +696,22 @@ bool TR064::xmlTakeParam(String (*params)[2], int nParam, Protocol protocol) {
     @return success state.
 */
 /**************************************************************************/
-bool TR064::xmlTakeParam(String& value, const String& needParam, Protocol takeProtocol) {
+bool TR064::xmlTakeParam(String& value, const String& needParam, Protocol protocol) {
     // Initial
     //WiFiClient * stream = &tr064client;
     //WiFiClient * stream = &_client;
 
    // WiFiClient * stream = _streamClient;
     
-    WiFiClient * stream;
+    WiFiClient * stream = &_client;
 
-    #if TRANSPORT_PROTOCOL == 1
+    if (protocol == Protocol::useHttps)
+    {
         stream= &_sslClient;
-        //WiFiClientSecure * stream = &_sslClient;
-    #else
-    //WiFiClient * stream = &_client;
-    stream = &_client;
-    #endif
+    }
+    
+
+    
     
     
 
