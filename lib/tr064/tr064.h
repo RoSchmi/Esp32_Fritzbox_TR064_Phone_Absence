@@ -127,10 +127,10 @@ class TR064 {
         bool httpRequest(const String& url, const String& xml, const String& action, bool retry, Protocol protocol = Protocol::useHttp);
         String generateAuthToken();
         String generateAuthXML();
-        String findServiceURL(String service);
+        String findServiceURL(const String& service);
         String cleanOldServiceName(const String& service);
-        bool xmlTakeParam(String (*params)[2], int nParam, Protocol protocol = Protocol::useHttp);
-        bool xmlTakeParam(String& value, const String& needParam, Protocol protocol = Protocol::useHttp);       
+        bool xmlTakeParam(String (*params)[2], int nParam);
+        bool xmlTakeParam(String& value, const String& needParam);       
         String errorToString(int error);
 
         int _state;

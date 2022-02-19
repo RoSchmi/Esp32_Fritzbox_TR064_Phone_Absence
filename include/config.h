@@ -49,6 +49,7 @@
 // Open the certificate with 'Editor' and add double quotes as can be seen here
 // Each FritzBox can have its specific certificate
 
+
 const char *myfritzbox_root_ca =
 "-----BEGIN CERTIFICATE-----\n"
 "MIID2DCCAsCgAwIBAgIJAOReByhZW+7gMA0GCSqGSIb3DQEBCwUAMCcxJTAjBgNV\n"
@@ -73,6 +74,5 @@ const char *myfritzbox_root_ca =
 "+Zr7KKh3XDhhBF43/TncYKPqm5uOLHlITivzQ8BTH0pPUujQwa0j+szGftuBjjHw\n"
 "xMX1RtE24A1Pi28qtRu/DbA1nbsj4gy4ymh4vA==\n"
 "-----END CERTIFICATE-----";
-
 
 #endif // _CONFIG_H

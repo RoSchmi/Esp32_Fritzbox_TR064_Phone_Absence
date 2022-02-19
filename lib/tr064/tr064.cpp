@@ -1,6 +1,3 @@
-// Modification of tr064.cpp by RoSchmi, 2021
-// Can use https transmission
-// adapted from:
 /*!
  * @file tr064.cpp
  *
@@ -12,9 +9,10 @@
  * such as Routers, smartplugs, DECT telephones etc.
  * Details, examples and the latest version of this library can be found on <a href="https://github.com/Aypac/Arduino-TR-064-SOAP-Library">the Github page</a>.
  * A descriptor of the protocol can be found <a href="https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/AVM_TR-064_first_steps.pdf" target="_blank">here</a>.
+ * Modifications to work with https by RoSchmi Feb 2022
  * 
  * Initial version: November 2016<br />
- * Last updated: Feb 2020
+ * Last updated: Feb 2022
  *
  * @section dependencies Dependencies
  *
@@ -48,6 +46,10 @@
                 User name to be used to establish the TR-064 connection.
     @param    pass
                 Password to be used to establish the TR-064 connection.
+    @param    protocol
+                Transmission protocol to be used (http/https).
+    @param    certificate
+                X509Certificate of Fritzbox to be used for https transmission.
 */
 /**************************************************************************/
 TR064::TR064(uint16_t port, const String& ip, const String& user, const String& pass, Protocol protocol, X509Certificate certificate) { 
@@ -108,6 +110,10 @@ void TR064::init() {
                 User name to be used to establish the TR-064 connection.
     @param    pass
                 Password to be used to establish the TR-064 connection.
+    @param    protocol
+                Transmission protocol to be used (http/https).
+    @param    certificate
+                X509Certificate of Fritzbox to be used for https transmission.
 */
 /**************************************************************************/
 TR064& TR064::setServer(uint16_t port, const String& ip, const String& user, const String& pass, Protocol protocol, X509Certificate certificate){
@@ -128,7 +134,6 @@ TR064& TR064::setServer(uint16_t port, const String& ip, const String& user, con
     }
     return *this;
 }
-
 
 /**************************************************************************/
 /*!
@@ -151,9 +156,9 @@ void TR064::initServiceURLs() {
                     deb_println("[TR064][initServiceURLs] xmlTakeParam : http connection lost", DEBUG_INFO);
                     break;                      
                 }
-                if(xmlTakeParam(_services[i][0], "serviceType", _protocol)){
+                if(xmlTakeParam(_services[i][0], "serviceType")) {
                     deb_print("[TR064][initServiceURLs] "+ String(i) + "\treadServiceName: "+ _services[i][0] , DEBUG_VERBOSE);
-                    if(xmlTakeParam(_services[i][1], "controlURL", _protocol)){
+                    if(xmlTakeParam(_services[i][1], "controlURL")) {
                         deb_println(" @ readServiceUrl: "+ _services[i][1], DEBUG_VERBOSE);
                         i++;
                     }else{
@@ -171,8 +176,7 @@ void TR064::initServiceURLs() {
         deb_println("[TR064][initServiceURLs]<Error> initServiceUrls failed", DEBUG_ERROR);  
         return;      
     }
-    this->_state = TR064_SERVICES_LOADED;
-    
+    _state = TR064_SERVICES_LOADED;   
     http.end();
 }
 
@@ -234,15 +238,15 @@ bool TR064::action(const String& service, const String& act, String params[][2],
     deb_println("[TR064][action] with parameters", DEBUG_VERBOSE);
     String req[][2] = {{}};
     if(action(service, act, params, nParam, req, 0, url)){
-        
-        
+              
         http.end();
         return true;
     }
       
-         http.end();    
+    http.end();    
     return false;
 }
+
 
 /**************************************************************************/
 /*!
@@ -277,7 +281,7 @@ bool TR064::action(const String& service, const String& act, String params[][2],
     int tries = 0; // Keep track on the number of times we tried to request.
     if (action_raw(service, act, params, nParam, url)) 
     {
-        if(xmlTakeParam(req, nReq, _protocol))
+        if(xmlTakeParam(req, nReq))
         {
             deb_println("[TR064][action] extraction complete.", DEBUG_VERBOSE);
         }
@@ -295,13 +299,11 @@ bool TR064::action(const String& service, const String& act, String params[][2],
                 String a[][2] = {{"NewAssociatedDeviceIndex", "1"}};
                 String wlanService = "WLANConfiguration:1", deviceInfo="GetGenericAssociatedDeviceInfo";
                 action_raw(wlanService, deviceInfo, a, 1, "/upnp/control/wlanconfig1");
-                
-                
-                if(xmlTakeParam(req, nReq, _protocol)){
+                             
+                if(xmlTakeParam(req, nReq)){
                     deb_println("[TR064][action] extraction complete.", DEBUG_VERBOSE);
                 }
                 
-
                 if (_nonce == "" || _realm == "") {
                     ++tries;
                     deb_println("[TR064][action]<Error> Nonce/realm request not successful!", DEBUG_ERROR);
@@ -318,14 +320,12 @@ bool TR064::action(const String& service, const String& act, String params[][2],
             }
             return action(service, act, params, nParam, req, nReq, url);
         }
-        deb_println("[TR064][action] Done.", DEBUG_INFO);
-        
+        deb_println("[TR064][action] Done.", DEBUG_INFO);       
         http.end();
         return true;
         
     }
     deb_println("[TR064][action]<error> Request Failed ", DEBUG_ERROR);
-    
     http.end();
     return false;
 }
@@ -376,6 +376,16 @@ bool TR064::action_raw(const String& service, const String& act, String params[]
     }else{
         return httpRequest(findServiceURL(_servicePrefix + serviceName), xml, soapaction, true, _protocol);
     }
+}
+
+/**************************************************************************/
+/*!
+    @brief  Returns the State of Service Load
+    @return The State. TR064_NO_SERVICES / TR064_SERVICES_LOADED
+*/
+/**************************************************************************/
+int TR064::state() {    
+    return this->_state;
 }
 
 // ----------------------------
@@ -435,7 +445,6 @@ String TR064::cleanOldServiceName(const String& service) {
     return service;
 }
 
-
 /**************************************************************************/
 /*!
     @brief  Helper function, which returns the (relative) URL for a service.
@@ -444,38 +453,25 @@ String TR064::cleanOldServiceName(const String& service) {
     @return String containing the (relative) URL for a service
 */
 /**************************************************************************/
-String TR064::findServiceURL(String service) {
-    for (int i=0;i<arr_len(_services);++i) {
-        if (_services[i][0] == service) {
-            return _services[i][1];
+String TR064::findServiceURL(const String& service) {
+    if(state()<TR064_SERVICES_LOADED){
+        deb_println("[TR064][findServiceURL]<error> Services NOT Loaded. ", DEBUG_ERROR);
+        return "";
+    }else{
+    
+        deb_println("[TR064][findServiceURL] searching for service: "+service, DEBUG_VERBOSE);
+
+        for (uint16_t i=0;i<arr_len(_services);++i) {            
+            if (service.equalsIgnoreCase(_services[i][0])) {
+                deb_println("[TR064][findServiceURL] found services: "+service+" = "+ _services[i][0]+" , "+ _services[i][1], DEBUG_VERBOSE);
+                return _services[i][1];
+            }
         }
     }
-    //Service not found error!
-    // TODO: Proper error-handling? See also #12 on github
-    return ""; 
+    return "";
 }
 
 
-/**************************************************************************/
-/*!
-    @brief  Transmits a http-Request to the given url (relative to _ip on _port)
-            - if specified POSTs xml and adds soapaction as header field.
-            - otherwise just GETs the url
-    @param    url
-                The service URL
-    @param    soapaction
-                The requested action
-    @param    xml
-                The request XML
-    @return The response from the device.
-*/
-/**************************************************************************/
-/*
-bool TR064::httpRequest(const String& url, const String& xml, const String& soapaction, Protocol protocol) {
-    
-    return httpRequest(url, xml, soapaction, true, protocol);
-}
-*/
 /**************************************************************************/
 /*!
     @brief  Transmits a http-Request to the given url (relative to _ip on _port)
@@ -489,46 +485,42 @@ bool TR064::httpRequest(const String& url, const String& xml, const String& soap
                 The request XML
     @param    retry
                 Should the request be repeated with a new nonce, if it fails?
+    @param    protocol
+                Transmission protocol to be used (http/https).
+                
+
     @return The response from the device.
 */
 /**************************************************************************/
 bool TR064::httpRequest(const String& url, const String& xml, const String& soapaction, bool retry, Protocol protocol) {
-    
-    String protocolPrefix = protocol == Protocol::useHttps ? "https://" : "http://";
-    
-    int usePort = _port;
-    bool useTls = false;
-    
-    if (protocol == Protocol::useHttps)
-    {   
-        useTls = true;
+    if (url=="") {
+        deb_println("[TR064][httpRequest] URL is empty, abort http request.", DEBUG_INFO);
+        return false;
     }
     
-    deb_println("[HTTP] prepare request to URL: " + protocolPrefix + _ip + ":" + usePort + url, DEBUG_INFO);
+    String protocolPrefix = protocol == Protocol::useHttps ? "https://" : "http://";
+    bool useTls = protocol == Protocol::useHttps ? true : false;
 
+    deb_println("[HTTP] prepare request to URL: " + protocolPrefix + _ip + ":" + _port + url, DEBUG_INFO);
     http.setReuse(true);
 
     if (protocol == Protocol::useHttps)
     {   
-        http.begin(tr064SslClient, _ip.c_str(), usePort, url.c_str(), useTls);       
+        http.begin(tr064SslClient, _ip.c_str(), _port, url.c_str(), useTls);
+        http.setConnectTimeout(2000);        
     }
     else
     {
-        http.begin(tr064SimpleClient, _ip.c_str(), usePort, url.c_str(), useTls);        
+        http.begin(tr064SimpleClient, _ip.c_str(), _port, url.c_str(), useTls);        
     }
     
-     http.addHeader("ACCEPT-ENCODING", "chunked");
-    
-   if (soapaction != "") {  
+    if (soapaction != "") {  
         http.addHeader("CONTENT-TYPE", "text/xml"); //; charset=\"utf-8\"
         http.addHeader("SOAPACTION", soapaction);
     }
-     
-    // Added by RoSchmi
-    //
-    http.setConnectTimeout(2000); 
-
-    // start connection and send HTTP header
+    
+    http.addHeader("ACCEPT-ENCODING", "chunked");
+   
     int httpCode=0;
     if (xml != "") {
         deb_println("[HTTP] Posting XML:", DEBUG_VERBOSE);
@@ -536,87 +528,54 @@ bool TR064::httpRequest(const String& url, const String& xml, const String& soap
         deb_println(xml, DEBUG_VERBOSE);
         deb_println("---------------------------------\n", DEBUG_VERBOSE);        
         httpCode = http.POST(xml);
-        deb_println("[HTTP] POST... SOAPACTION: '" + soapaction + "'", DEBUG_INFO);
+        deb_println("[HTTP] POST... SOAPACTION: '" + soapaction + "'", DEBUG_VERBOSE);
     } else {         
         httpCode = http.GET();
-        deb_println("[HTTP] GET...", DEBUG_INFO);
+        deb_println("[HTTP] GET...", DEBUG_VERBOSE);
     }
-      
-    String payload = "";
-    
-    if (httpCode > 0) 
-    {
+
+    // httpCode will be negative on error  
+    if (httpCode > 0) {
         // HTTP header has been sent and Server response header has been handled
-        deb_println("[HTTP] request code: " + String(httpCode), DEBUG_INFO);
-       
-        if (httpCode == HTTP_CODE_OK) 
-        {             
+          
+        if (httpCode == HTTP_CODE_OK) {             
             return true;
-        }
-        else
-        {
-            if (httpCode == HTTP_CODE_INTERNAL_SERVER_ERROR || httpCode == HTTP_CODE_BAD_REQUEST) 
-            { 
+        }else{
+            if (httpCode == HTTP_CODE_INTERNAL_SERVER_ERROR) { 
                 String req[][2] = {{"errorCode",""},{"errorDescription",""}};
-                if (xmlTakeParam(req, 2, _protocol)) 
-                {                                
-                    if(req[0][1]!="")
-                    {
+                if (xmlTakeParam(req, 2)) {                                
+                    if(req[0][1]!=""){
                         deb_println("[TR064][httpRequest] <TR064> Failed, errorCode: '" + req[0][1]  + "'", DEBUG_VERBOSE);                    
                         deb_println("[TR064][httpRequest] <TR064> Failed, message: '" + errorToString(req[0][1].toInt())  + "'", DEBUG_ERROR);
                         deb_println("[TR064][httpRequest] <Error> Failed, description: '" + req[1][1] + "'", DEBUG_VERBOSE);
                     }
                 }
-                //_instHttp->end();
-                http.end();
-        
-                if (retry) 
-                {
-                _nonce = "";
-                deb_println("[HTTP]<Error> Trying again in 1s.", DEBUG_ERROR);
-                delay(1000);
-                return httpRequest(url, xml, soapaction, false, _protocol);
-            } else 
-            {
-            deb_println("[HTTP]<Error> Giving up.", DEBUG_ERROR);
-            return "";
-            }     
+                    
             }
-           // return false;
-        }  
-        
-    } 
-    else  // httpCode < 0
-    {
-        // Error
-        // TODO: Proper error-handling? See also #12 on github    
-        //String httperr = _instHttp->errorToString(httpCode).c_str();
-        String httperr = http.errorToString(httpCode).c_str();
-        deb_println("[HTTP]<Error> Failed, message: '" + httperr + "'", DEBUG_ERROR);      
-        //_instHttp->end();
-        http.end();
-        
-        if (retry) 
-        {
-            _nonce = "";
-            deb_println("[HTTP]<Error> Trying again in 1s.", DEBUG_ERROR);
-            delay(1000);
-            return httpRequest(url, xml, soapaction, false, _protocol);
-        } else 
-        {
-            deb_println("[HTTP]<Error> Giving up.", DEBUG_ERROR);
-            return "";
+            return false;
         }
-    }
-    
-    deb_println("[HTTP] Received back", DEBUG_VERBOSE);
-    deb_println("---------------------------------", DEBUG_VERBOSE);
-    deb_println(payload, DEBUG_VERBOSE);
-    deb_println("---------------------------------\n", DEBUG_VERBOSE); 
-      
+
+    } else {
+        // Error
+        // TODO: Proper error-handling? See also #12 on github
+        
+        String httperr = http.errorToString(httpCode).c_str();
+
+        deb_println("[TR064][httpRequest]<Error> Failed, message: '" + httperr + "'", DEBUG_ERROR);
+
+        if (retry) {
+            _nonce = "";
+            deb_println("[TR064][httpRequest] <Error> Trying again in 1s.", DEBUG_ERROR);
+            delay(1000);
+            return httpRequest(url, xml, soapaction, false);
+        } else {
+            deb_println("[TR064][httpRequest] <Error> Giving up.", DEBUG_ERROR);
+            return false;
+        }
+    }  
     return true;
 }
-
+            
 
 /**************************************************************************/
 /*!
@@ -652,6 +611,7 @@ String TR064::byte2hex(byte number){
     return Hstring;
 }
 
+
 /**************************************************************************/
 /*!
     @brief  Extract the content of an XML element with a certain tag. It
@@ -665,8 +625,7 @@ String TR064::byte2hex(byte number){
     @return success state.
 */
 /**************************************************************************/
-bool TR064::xmlTakeParam(String (*params)[2], int nParam, Protocol protocol) {
-
+bool TR064::xmlTakeParam(String (*params)[2], int nParam) {
     WiFiClient * stream = tr064ClientPtr;
      
     while(stream->connected()) {  
@@ -678,6 +637,7 @@ bool TR064::xmlTakeParam(String (*params)[2], int nParam, Protocol protocol) {
             const String htmltag = stream->readStringUntil('>');
             const String value = stream->readStringUntil('<');
             deb_println("[TR064][xmlTakeParam] htmltag: "+htmltag, DEBUG_VERBOSE);
+            
             if (nParam > 0) {
                 for (uint16_t i=0; i<nParam; ++i) {
                     if(htmltag.equalsIgnoreCase(params[i][0])){
@@ -731,34 +691,10 @@ bool TR064::xmlTakeParam(String (*params)[2], int nParam, Protocol protocol) {
     @return success state.
 */
 /**************************************************************************/
-bool TR064::xmlTakeParam(String& value, const String& needParam, Protocol protocol) {
-    // Initial
+bool TR064::xmlTakeParam(String& value, const String& needParam) {   
     WiFiClient * stream = tr064ClientPtr;
-    //WiFiClient * stream = &_client;
-
-   // WiFiClient * stream = _streamClient;
     
-    /*
-    WiFiClient * stream = &_client;
-
-    if (protocol == Protocol::useHttps)
-    {
-        stream= &_sslClient;
-    }
-    */
-    
-
-    
-    
-    
-
-    /*
-    stream->setTimeout(40);
-    stream->Stream::setTimeout(40);
-    */
-     
-    while(stream->connected()) {
-        //if(!_instHttp->connected()) {
+    while(stream->connected()) {       
         if(!http.connected()) {  
             deb_println("[TR064][xmlTakeParam] http connection lost", DEBUG_INFO);
             return false;                      
@@ -778,95 +714,6 @@ bool TR064::xmlTakeParam(String& value, const String& needParam, Protocol protoc
     return true;
 }
 
-
-/**************************************************************************/
-/*!
-    @brief  Extract the content of an XML element with a certain tag. It
-            tries with case-sensitive
-            matching first, but resorts to case-insensitive matching, when
-            failing.
-    @param    inStr
-                The XML from which to extract.
-    @param    needParam
-                The name of the XML tag, you want the content of.
-    @return The content of the requested XML tag (as `String`).
-*/
-/**************************************************************************/
-/*
-String TR064::xmlTakeParam(String inStr, String needParam) {
-    String cont = xmlTakeSensitiveParam(inStr, needParam);
-    if (cont != "") {
-        return cont;
-    }
-    //As backup
-    //TODO: Give warning?
-    return xmlTakeInsensitiveParam(inStr, needParam);
-}
-*/
-/**************************************************************************/
-/*!
-    @brief  Extract the content of an XML element with a certain tag, with
-            case-sensitive matching.
-    @param    inStr
-                The XML from which to extract.
-    @param    needParam
-                The name of the XML tag, you want the content of.
-    @return The content of the requested XML tag (as `String`).
-*/
-/**************************************************************************/
-/*
-String TR064::xmlTakeSensitiveParam(String inStr, String needParam) {
-    return _xmlTakeParam(inStr, needParam);
-}
-*/
-
-/**************************************************************************/
-/*!
-    @brief  Extract the content of an XML element with a certain tag, with
-            case-insensitive matching.
-            Not recommend to use directly/as default, since XML is
-            case-sensitive by definition/specification, this is just made
-            to be used as backup, if the case-sensitive method failed.
-    @param    inStr
-                The XML from which to extract.
-    @param    needParam
-                The name of the XML tag, you want the content of.
-    @return The content of the requested XML tag (as `String`).
-*/
-/**************************************************************************/
-/*
-String TR064::xmlTakeInsensitiveParam(String inStr,String needParam) {
-    needParam.toLowerCase();
-    String instr = inStr;
-    instr.toLowerCase();
-    return _xmlTakeParam(instr, needParam);
-}
-*/
-
-/**************************************************************************/
-/*!
-    @brief  Underlying function to extract the content of an XML element
-            with a certain tag.
-    @param    inStr
-                The XML (as `String`) from which to extract.
-    @param    needParam
-                The name of the XML tag, you want the content of.
-    @return The content of the requested XML tag (as `String`).
-*/
-/**************************************************************************/
-/*
-String TR064::_xmlTakeParam(String inStr, String needParam) {
-   int indexStart = inStr.indexOf("<"+needParam+">");
-   int indexStop = inStr.indexOf("</"+needParam+">");  
-   if (indexStart > 0 || indexStop > 0) {
-    int CountChar = needParam.length();
-    return inStr.substring(indexStart+CountChar+2, indexStop);
-   }
-    //TODO: Proper error-handling? See also #12 on github
-    return "";
-}
-*/
-
 /**************************************************************************/
 /*!
     @brief  Debug-print. Only prints the message if the debug level is high enough.
@@ -879,6 +726,7 @@ String TR064::_xmlTakeParam(String inStr, String needParam) {
 void TR064::deb_print(const String& message, int level) {
     if (Serial) {
         if (debug_level >= level) {
+            // where is location?
             Serial.print(message);
             //Serial.flush();
         }
