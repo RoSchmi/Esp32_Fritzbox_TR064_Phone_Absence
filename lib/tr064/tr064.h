@@ -1,7 +1,3 @@
-// Modification of tr064.h by RoSchmi, 2021
-//
-// adapted from:
-
 /*!
  * @file tr064.h
  * 
