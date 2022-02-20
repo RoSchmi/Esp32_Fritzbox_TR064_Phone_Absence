@@ -31,7 +31,7 @@
 #define MEASURE_READ_REPEAT_COUNT 50  // When Power-Measure is set on, we read and actualize
                                       // n times (with POWER_MEASURE_READINTERVAL_MS) the measured power. >=1000 means: read infinitely                                      
 
-#define TRANSPORT_PROTOCOL 1        // 0 = http, 1 = https
+#define TRANSPORT_PROTOCOL 0        // 0 = http, 1 = https
                                     // should be 1 for normal operation and 0 for testing
 
 // Not yet implemented                                  

@@ -68,8 +68,12 @@ TR064::TR064(uint16_t port, const String& ip, const String& user, const String& 
     }
     else
     {
-        tr064ClientPtr = &tr064SimpleClient;
+        tr064ClientPtr = (WiFiClient *)&tr064SslClient;
+        //tr064SslClient.setSocketOption()
+        //tr064SslClient.setInsecure();
+        //tr064ClientPtr = &tr064SimpleClient;
     }
+    
 }
 
 /**************************************************************************/
@@ -126,12 +130,14 @@ TR064& TR064::setServer(uint16_t port, const String& ip, const String& user, con
     if (protocol == Protocol::useHttps)
     {
         tr064SslClient.setCACert(certificate);
-        tr064ClientPtr = &tr064SslClient;
+        //tr064ClientPtr = &tr064SslClient;
     }
     else
     {
-        tr064ClientPtr = &tr064SimpleClient;
+        //tr064ClientPtr = &tr064SimpleClient;
+        //tr064ClientPtr = &tr064SslClient;
     }
+    tr064ClientPtr = &tr064SslClient;
     return *this;
 }
 
@@ -501,7 +507,9 @@ bool TR064::httpRequest(const String& url, const String& xml, const String& soap
         http.begin(tr064SslClient, _ip.c_str(), _port, url.c_str(), useTls);
         http.setConnectTimeout(2000);
     }else{
-        http.begin(tr064SimpleClient, _ip.c_str(), _port, url.c_str(), useTls);
+        http.begin((WiFiClient)tr064SslClient, _ip.c_str(), _port, url.c_str(), useTls);
+        http.setConnectTimeout(2000);
+        //http.begin(tr064SimpleClient, _ip.c_str(), _port, url.c_str(), useTls);
     }
     
     if (soapaction != "") {
