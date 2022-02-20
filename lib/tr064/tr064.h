@@ -119,7 +119,7 @@ class TR064 {
         int debug_level; ///< Available levels are `DEBUG_NONE`, `DEBUG_ERROR`, `DEBUG_WARNING`, `DEBUG_INFO`, and `DEBUG_VERBOSE`.
        
     private:
-        //WiFiClient tr064SimpleClient;
+        WiFiClient tr064SimpleClient;
         WiFiClientSecure tr064SslClient;
         WiFiClient * tr064ClientPtr;
         HTTPClient http;
