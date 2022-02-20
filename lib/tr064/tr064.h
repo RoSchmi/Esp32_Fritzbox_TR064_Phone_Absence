@@ -25,9 +25,11 @@
 
 #if defined(ESP8266)
     //if(Serial) Serial.println(F("Version compiled for ESP8266."));
+    #include <ESP8266WiFi.h>
     #include <ESP8266HTTPClient.h>
 #elif defined(ESP32)
     //if(Serial) Serial.println(F("Version compiled for ESP32."));
+    #include <WiFi.h>
     #include <HTTPClient.h>
 #else
     //INCOMPATIBLE!
@@ -58,6 +60,14 @@ typedef const char* X509Certificate;
 #define TR064_NO_SERVICES           -1 ///< No Service actions will not execute
 #define TR064_SERVICES_LOADED       0 ///< Service loaded
 
+// Possible values for client.state()
+#define TR064_NO_SERVICES           -1
+#define TR064_SERVICES_LOADED       0
+
+// Possible values for client.state()
+#define TR064_NO_SERVICES          -1
+#define TR064_SERVICES_LOADED       0
+
 /**************************************************************************/
 /*! 
     @brief Class to easily make TR-064 calls. This is the main class
@@ -66,7 +76,7 @@ typedef const char* X509Certificate;
 */
 /**************************************************************************/
 
-class TR064 { 
+class TR064 {
     public:
         /*!  Different debug level
          *   DEBUG_NONE         ///< Print no debug messages whatsoever
@@ -114,7 +124,7 @@ class TR064 {
         WiFiClient * tr064ClientPtr;
         HTTPClient http;
 
-        //TODO: More consistent naming.
+        //TODO: More consistent naming
 
         void initServiceURLs();
         void deb_print(const String& message, int level);
@@ -127,15 +137,15 @@ class TR064 {
         String cleanOldServiceName(const String& service);
         bool xmlTakeParam(String (*params)[2], int nParam);
         bool xmlTakeParam(String& value, const String& needParam);       
-        String errorToString(int error);
+        static String errorToString(int error);
 
         int _state;
         String _ip;
-        int _port;
+        uint16_t _port;
         String _user;
         String _pass;
-        String _realm; //To be requested from the router
-        String _secretH; //to be generated
+        String _realm; // To be requested from the router
+        String _secretH; // To be generated
         String _nonce = "";
         String _status;
         X509Certificate _certificate;
@@ -147,7 +157,7 @@ class TR064 {
         unsigned long lastOutActivity;
         unsigned long lastInActivity;
         /*
-            * TODO: We should give access to this data for users to inspect the
+                * TODO: We should give access to this data for users to inspect the
         * possibilities of their device(s) - see #9 on Github.
         * TODO: Remove 100 services limits here
         */
