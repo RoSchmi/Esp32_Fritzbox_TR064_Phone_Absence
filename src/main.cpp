@@ -7,6 +7,7 @@
 //
 // Uses a modification of the following library:
 // https://github.com/Aypac/Arduino-TR-064-SOAP-Library
+// https://github.com/RoSchmi/Arduino-TR-064-SOAP-Library/tree/devRoSchmiPr1
 
 // Some settings which have to be made on the Fritzbox can be found here:
 // https://www.schlaue-huette.de/apis-co/fritz-tr064/
@@ -20,13 +21,24 @@
 // wenn alles richtig, öffne zum Test: http://fritz.box:49000/tr64desc.xml
 
 #include <Arduino.h>
-#include <WiFi.h>
-#include <WiFiMulti.h>
-#include <HTTPClient.h>
-#include <tr064.h>
 #include "config_secret.h"
 #include "config.h"
-#include "WiFiClientSecure.h"
+
+#if defined(ESP8266)
+  	//Imports for ESP8266
+  	#include <ESP8266WiFi.h>
+  	#include <ESP8266WiFiMulti.h>
+ 	 #include <ESP8266HTTPClient.h>
+ 	 ESP8266WiFiMulti wiFiMulti;
+#elif defined(ESP32)
+  	//Imports for ESP32
+ 	 #include <WiFi.h>
+  	#include <WiFiMulti.h>
+  	#include <HTTPClient.h>
+  	WiFiMulti wiFiMulti;
+#endif
+
+#include <tr064.h>
 
 // Default Esp32 stack size of 8192 byte is not enough for some applications.
 // --> configure stack size dynamically from code to 16384
@@ -34,8 +46,8 @@
 // Patch: Replace C:\Users\thisUser\.platformio\packages\framework-arduinoespressif32\cores\esp32\main.cpp
 // with the file 'main.cpp' from folder 'patches' of this repository, then use the following code to configure stack size
 #if !(USING_DEFAULT_ARDUINO_LOOP_STACK_SIZE)
-  //uint16_t USER_CONFIG_ARDUINO_LOOP_STACK_SIZE = 8192;
-  uint16_t USER_CONFIG_ARDUINO_LOOP_STACK_SIZE = 16384;
+  uint16_t USER_CONFIG_ARDUINO_LOOP_STACK_SIZE = 8192;
+  //uint16_t USER_CONFIG_ARDUINO_LOOP_STACK_SIZE = 16384;
   
 #endif
 
@@ -49,23 +61,6 @@ typedef struct HostsResponse
     char macAddress[20];
 } HostsResponse;
 
-X509Certificate myX509Certificate = myfritzbox_root_ca;
-
-
-#if TRANSPORT_PROTOCOL == 1
-    //static WiFiClientSecure wifi_client;
-    Protocol protocol = Protocol::useHttps;
-  #else
-    //static WiFiClient wifi_client;
-    Protocol protocol = Protocol::useHttp;
-#endif
-/*
-HTTPClient http;
-static HTTPClient * httpPtr = &http;
-*/
-
-WiFiMulti wiFiMulti;
- 
 //-------------------------------------------------------------------------------------
 // Put your router settings here
 //-------------------------------------------------------------------------------------
@@ -83,21 +78,25 @@ const char* fpass = FRITZ_PASSWORD;
 //const char* IP = "192.168.179.1";
 const char* IP = FRITZ_IP_ADDRESS;
 
-// Port of the API of your router. This should be 49000 for http and 49443 for https
-#if TRANSPORT_PROTOCOL == 1
-    const int PORT = 49443;
+// Setting up port and X509Certificate when using https
+#if TRANSPORT_PROTOCOL == 0
+	const int PORT = 49000;
+	Protocol protocol = Protocol::useHttp;
 #else
-    const int PORT = 49000;
+    const int PORT = 49443;
+	X509Certificate myX509Certificate = myfritzbox_root_ca;
+	#if TRANSPORT_PROTOCOL == 1
+		Protocol protocol = Protocol::useHttpsInsec;
+	#else
+		Protocol protocol = Protocol::useHttps;
+	#endif
 #endif
 
-// -------------------------------------------------------------------------------------
- 
 // TR-064 connection
-// TR064 connection(PORT, IP, fuser, fpass, protocol, wifi_client, httpPtr, myX509Certificate);
-#if TRANSPORT_PROTOCOL == 1
-    TR064 connection(PORT, IP, fuser, fpass, protocol, myX509Certificate);
-#else
+#if TRANSPORT_PROTOCOL == 0
     TR064 connection(PORT, IP, fuser, fpass);
+#else
+	TR064 connection(PORT, IP, fuser, fpass, protocol, myX509Certificate);
 #endif
 
 // Die AIN der DECT!200 Steckdose findet sich im FritzBox Webinterface

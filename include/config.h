@@ -14,14 +14,17 @@
 // The credentials of your WiFi router have to be set in the file config_secret.h
 
 // Different debug level, don't change the following 5 lines
-#define DEBUG_NONE 0        ///< Print no debug messages whatsoever
-#define DEBUG_ERROR 1       ///< Only print error messages
-#define DEBUG_WARNING 2     ///< Only print error and warning messages
-#define DEBUG_INFO 3        ///< Print error, warning and info messages
-#define DEBUG_VERBOSE 4     ///< Print all messages
+
+
+
+#define _DEBUG_NONE 0      //< Print no debug messages whatsoever
+#define _DEBUG_ERROR 1       //< Only print error messages
+#define _DEBUG_WARNING 2     //< Only print error and warning messages
+#define _DEBUG_INFO 3        //< Print error, warning and info messages
+#define _DEBUG_VERBOSE 4     //< Print all messages
 
 // Choose used debug level here
-#define SELECTED_DEBUG_LEVEL    DEBUG_VERBOSE
+#define SELECTED_DEBUG_LEVEL    _DEBUG_VERBOSE
 
 #define POWER_MEASURE_READINTERVAL_MS  10 * 1000   // Read Fritz!DECT power sensor using this interval
 
@@ -30,9 +33,16 @@
 
 #define MEASURE_READ_REPEAT_COUNT 50  // When Power-Measure is set on, we read and actualize
                                       // n times (with POWER_MEASURE_READINTERVAL_MS) the measured power. >=1000 means: read infinitely                                      
+// 
+// Set transport protocol here: (httpsInsec and https only working on Esp32)
+// http (0) means: normal http via port 49000
+// httpsInsec (1) means: https via port 49443 without rootCa validation
+// https (2) means: https via port 49443 with rootCa validation
 
-#define TRANSPORT_PROTOCOL 1        // 0 = http, 1 = https
-                                    // should be 1 for normal operation and 0 for testing
+#define TRANSPORT_PROTOCOL 0        // 0 = http, 1 = httpsInsec, 2 = https
+//#define TRANSPORT_PROTOCOL 1      // 0 = http, 1 = httpsInsec, 2 = https
+//#define TRANSPORT_PROTOCOL 2      // 0 = http, 1 = httpsInsec, 2 = https
+                                    // should be 1 or 2 for normal operation and 0 for testing
 
 // Not yet implemented                                  
 #define WORK_WITH_WATCHDOG 0        // 1 = yes, 0 = no, Watchdog is used (1) or not used (0)
