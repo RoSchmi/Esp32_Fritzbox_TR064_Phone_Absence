@@ -69,7 +69,7 @@ TR064::TR064(uint16_t port, const String& ip, const String& user, const String& 
     else
     {
         tr064ClientPtr = &tr064SimpleClient;
-    }  
+    }
 }
 
 /**************************************************************************/
@@ -116,7 +116,7 @@ void TR064::init() {
                 X509Certificate of Fritzbox to be used for https transmission.
 */
 /**************************************************************************/
-TR064& TR064::setServer(uint16_t port, const String& ip, const String& user, const String& pass, Protocol protocol, X509Certificate certificate){
+TR064& TR064::setServer(uint16_t port, const String& ip, const String& user, const String& pass, Protocol protocol, X509Certificate certificate) {
     this->_ip = ip;
     this->_port = port;
     this->_user = user;
@@ -147,8 +147,7 @@ void TR064::initServiceURLs() {
      */
 
     _state = TR064_NO_SERVICES;
-    if(httpRequest(_detectPage, "", "", true, _protocol))
-        {
+    if(httpRequest(_detectPage, "", "", true)) {
             deb_println("[TR064][initServiceURLs] get the Stream ", DEBUG_INFO);
             int i = 0;
             while(1) {
@@ -305,7 +304,6 @@ bool TR064::action(const String& service, const String& act, String params[][2],
                     deb_println("[TR064][action]<Error> Retrying in 5s", DEBUG_ERROR);
                     delay(5000);
                 }
-
                 http.end();
             }
             if (tries >= 3) {
@@ -367,9 +365,9 @@ bool TR064::action_raw(const String& service, const String& act, String params[]
     
     // Send the http-Request
     if(url !=""){
-        return httpRequest(url, xml, soapaction, true, _protocol);
+        return httpRequest(url, xml, soapaction, true);
     }else{
-        return httpRequest(findServiceURL(_servicePrefix + serviceName), xml, soapaction, true, _protocol);
+        return httpRequest(findServiceURL(_servicePrefix + serviceName), xml, soapaction, true);
     }
 }
 
@@ -481,29 +479,29 @@ String TR064::findServiceURL(const String& service) {
     @param    retry
                 Should the request be repeated with a new nonce, if it fails?
     @param    protocol
-                Transmission protocol to be used (http/https). 
+                Transmission protocol to be used (http/https).
     @return success state.
 */
 /**************************************************************************/
-bool TR064::httpRequest(const String& url, const String& xml, const String& soapaction, bool retry, Protocol protocol) {
+bool TR064::httpRequest(const String& url, const String& xml, const String& soapaction, bool retry) {
     if (url=="") {
         deb_println("[TR064][httpRequest] URL is empty, abort http request.", DEBUG_INFO);
         return false;
     }
 
-    String protocolPrefix = protocol == Protocol::useHttps ? "https://" : "http://";
-    bool useTls = protocol == Protocol::useHttps ? true : false;
+    String protocolPrefix = _protocol == Protocol::useHttps ? "https://" : "http://";
+    bool useTls = _protocol == Protocol::useHttps ? true : false;
 
     deb_println("[HTTP] prepare request to URL: " + protocolPrefix + _ip + ":" + _port + url, DEBUG_INFO);
     http.setReuse(true);
-    
-    if (protocol == Protocol::useHttps) {
+
+    if (_protocol == Protocol::useHttps) {
         http.begin(tr064SslClient, _ip.c_str(), _port, url.c_str(), useTls);
         http.setConnectTimeout(2000);
     }else{
         http.begin(tr064SimpleClient, _ip.c_str(), _port, url.c_str(), useTls);
     }
-
+    
     if (soapaction != "") {
         http.addHeader("CONTENT-TYPE", "text/xml"); //; charset=\"utf-8\"
         http.addHeader("SOAPACTION", soapaction);
@@ -619,6 +617,7 @@ String TR064::byte2hex(byte number){
 /**************************************************************************/
 bool TR064::xmlTakeParam(String (*params)[2], int nParam) {
     WiFiClient * stream = tr064ClientPtr;
+
     while(stream->connected()) {
         if(!http.connected()) {
             deb_println("[TR064][xmlTakeParam] http connection lost", DEBUG_INFO);
