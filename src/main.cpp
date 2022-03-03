@@ -1,9 +1,10 @@
 // Program 'Esp32_Fritzbox_TR064_Phone_Absence'
 // by RoSchmi
 //
-// This App is intended to check if mobile phones are absent
-// from the Fritzbox WLAN range and to switch a DECT!200 power
-// socket to reflect the present/absent state
+// This App shows examples how to check through TR-064 protocol 
+// if mobile phones are absent from the Fritzbox WLAN range and 
+// to switch a DECT!200 power socket to reflect the present/absent state.
+// Additionally some other functions are shown.
 //
 // Uses a modification of the following library:
 // https://github.com/Aypac/Arduino-TR-064-SOAP-Library
@@ -56,7 +57,7 @@ typedef struct HostsResponse
     bool isValid;
     char hostName[50];
     char index[10];
-    char active[5];
+    char active[3];
     char ipAddress[50];
     char macAddress[20];
 } HostsResponse;
@@ -78,14 +79,15 @@ const char* fpass = FRITZ_PASSWORD;
 //const char* IP = "192.168.179.1";
 const char* IP = FRITZ_IP_ADDRESS;
 
-// Setting up port and X509Certificate when using https
+// Setting up port for http/https transmission and 
+// X509Certificate when using https
 #if TRANSPORT_PROTOCOL == 0
 	const int PORT = 49000;
 	Protocol protocol = Protocol::useHttp;
 #else
     const int PORT = 49443;
 	X509Certificate myX509Certificate = myfritzbox_root_ca;
-	#if TRANSPORT_PROTOCOL == 1
+	#if TRANSPORT_PROTOCOL == 1     // ssl but no rootCa validation
 		Protocol protocol = Protocol::useHttpsInsec;
 	#else
 		Protocol protocol = Protocol::useHttps;
@@ -99,8 +101,8 @@ const char* IP = FRITZ_IP_ADDRESS;
 	TR064 connection(PORT, IP, fuser, fpass, protocol, myX509Certificate);
 #endif
 
-// Die AIN der DECT!200 Steckdose findet sich im FritzBox Webinterface
-// oder auf dem Gerät selbst
+// The AIN of the DECT!200 powersocket can be found in the FritzBox Webinterface
+// or on the device itself.
 // const String Steckdose1 = "12345 0123456"; (exactly this format - 5 digits, then space, then 7 digits )
 const String Steckdose1 = FRITZ_DEVICE_AIN_01;
 
@@ -122,8 +124,9 @@ const char macsPerUser[numUser][maxDevices][18] =
       {USER_3_MAC_1,USER_3_MAC_2, USER_3_MAC_3}, //User3
       {USER_4_MAC_1,USER_4_MAC_2, USER_4_MAC_3}};//User4
 
-      // Status array. 
+// Status arrays. 
 bool onlineUsers[numUser];
+bool powerSocketStates[numUser];
 
 // Array-settings.
 const String STATUS_MAC = "MAC";
@@ -148,7 +151,6 @@ void WahlRundruf();
 int getWifiNumber();
 void getStatusOfAllWifi(int numDev);
 bool GetHostNameByIndex(int index, char * outHostName, int maxHostNameLength);
-//bool CheckForMacActive(const char * testMAC);
 void serialEvent();
 
 void setup() {
@@ -163,7 +165,7 @@ void setup() {
     // delay is optional
     delay(5000);
 
-    // Bei Problemen kann hier die Debug Ausgabe aktiviert werden
+    // For debugging activate proper Debug level 
     // The wanted debug level has to be set in file config.h
     connection.debug_level = SELECTED_DEBUG_LEVEL;
 
@@ -185,34 +187,87 @@ void setup() {
 }
  
 void loop() {
-    // run functions one time
+    ensureWIFIConnection();
+
     /*
     delay(1000);
     GetDeviceInfo(Steckdose1);
     delay(1000);
-    */
     
-    /*
     SetSwitch(Steckdose1, "ON");
     Serial.println("Switched on");
-    delay(5000);
-    */
-
-    /*
-    SetSwitch(Steckdose1, "OFF");
-     Serial.println("Switched off");
-    delay(5000);
-
     GetDeviceInfo(Steckdose1);
-    delay(1000);
+
+    delay(5000);
+    SetSwitch(Steckdose1, "OFF");
+    Serial.println("Switched off");
+    GetDeviceInfo(Steckdose1);
+
+    delay(5000);
     */
+
     //Serial.println("Wahlrundruf");
     //WahlRundruf();
-    
-    HostsResponse hostsResponse = getHostStatusByIndex(15);
+     
+    // For the next round, assume all users are offline
+	for (int i=0;i<numUser;++i) {
+		onlineUsers[i] = false;
+	}
+
+    for (int i = 0; i < numUser; ++i) 
+    {
+		if (Serial) Serial.printf("> USER %d -------------------------------\n",i);
+        // Check for each device-mac-address if an entry exists and if the state is active
+        for (int j = 0; j < maxDevices; j++ )
+        {
+            String curMac = macsPerUser[i][j];
+            bool User_Device_Absent = (curMac == "");
+            if (!User_Device_Absent)
+            {
+                HostsResponse hostsResponse = getHostStatusByMACAddress(curMac);
+                {
+                    if (hostsResponse.isValid)
+                    {
+                        onlineUsers[i] = onlineUsers[i] ? true : hostsResponse.active[i] == '1';
+                    }
+                }
+            }
+        }
+
+        if (onlineUsers[i] == true)    // state of at least one device is active
+        {   
+            if (Serial) Serial.printf("At least one Device of User_%d is present.\n\n", i);
+            
+            if (i == 0)  // example: for powerSocket and device with ID = 0
+            {
+                if (powerSocketStates[i] != onlineUsers[i])
+                {
+                    powerSocketStates[i] = onlineUsers[i];
+                    SetSwitch(Steckdose1, "ON");
+                    Serial.println("Switched on\n");
+                }
+            }
+        }
+        else        // state of all devices of this user is inactive
+        {
+            if (Serial) Serial.printf("All Devices of User_%d are absent.\n\n", i);
+            if (i == 0)  // example: for powerSocket and device with ID = 0
+            {
+                if (powerSocketStates[i] != onlineUsers[i])
+                {
+                    powerSocketStates[i] = onlineUsers[i];
+                    SetSwitch(Steckdose1, "OFF");
+                    Serial.println("Switched off\n");
+                }
+            }
+        }
+    }
+
+    /*
+    HostsResponse hostsResponse = getHostStatusByIndex(10);
     if (hostsResponse.isValid)
     {
-        Serial.print("Main: Hostname of Index No. 1: ");
+        Serial.print("Main: Hostname of Index No. 11: ");
         Serial.println(hostsResponse.hostName);
         volatile int dummy54376 = 1;   
     }
@@ -220,26 +275,6 @@ void loop() {
     {
         Serial.println("Error reading HostName of specified index");
         volatile int dummy54377 = 1; 
-    }
-    
-    hostsResponse = getHostStatusByMACAddress(USER_1_MAC_1);
-    if (hostsResponse.isValid)
-    {
-        Serial.print("Main: Hostname of Mac-Address: ");
-        Serial.println(hostsResponse.hostName);
-        volatile int dummy54376 = 1;   
-    }
-    else
-    {
-        Serial.println("Error reading HostName of specified MACAddress");
-        volatile int dummy54377 = 1; 
-    }
-
-    /*
-    while (true)
-    {
-        delay(3000);
-        Serial.println("Program ended successfully, now infinite loop");
     }
     */
     
@@ -256,62 +291,8 @@ void loop() {
         Serial.print("Error reading HostName of specified index");
     }
     */
-
-    //("Hello");
-    
-    /*
-    while (true)
-    {
-        delay(3000);
-        Serial.println("Program ended successfully, now infinite loop");
-    }
-    */
-    ensureWIFIConnection();
   
-	// For the next round, assume all users are offline
-	for (int i=0;i<numUser;++i) {
-		onlineUsers[i] = false;
-	}
-    
-    /*
-	// Check for all users if at least one of the macs is online
-	for (int i=0;i<numUser;++i) {
-		if (Serial) Serial.printf("> USER %d -------------------------------\n",i);
-		boolean b = true; //No online device found yet
-		// Check all devices
-		for (int j=0;j<maxDevices && b;++j) {
-		// Get the mac of the device to check
-		String curMac = macsPerUser[i][j];
-		b = (curMac!=""); //If it is empty, we don't need to check it (or the next one)
-		if (b) {
-			// okay, ask the router for the status of this MAC
-			String stat2[4][2];
-			getStatusOfMAC(curMac, stat2);
-            
-            if (i == 0)
-            {
-                String first = stat2[3][1];
-                if(Serial) Serial.print("Selected: ");
-                
-                if(Serial) Serial.println(first);
-                volatile int dummy3 = 1;
-                dummy3 = dummy3 + 1;
-            }
-
-
-			// aaaaaaaaaaaannd??? Is it online?
-			if (stat2[STATUS_ACTIVE_INDEX][1] != "" && stat2[STATUS_ACTIVE_INDEX][1] != "0") {
-			onlineUsers[i] = true;
-			b=true;
-			}
-			// Okay, print the status to the console!
-			verboseStatus(stat2);
-		}
-		}
-	}
-	if(Serial) Serial.println("-------------------------------------------");
-    */
-	delay(1000);
+	delay(5000);
 }
 
 // not used in this example
@@ -445,8 +426,7 @@ void getStatusOfMAC(String mac, String (&r)[4][2]) {
 		r[STATUS_ACTIVE_INDEX][1] = req[1][1];
         // RoSchmi
         String theActiveState = r[STATUS_ACTIVE_INDEX][1];
-        volatile int dummy564 = 1;
-        dummy564 = dummy564 + 1;
+        
 	}else{
 		if(Serial) {
 		Serial.println(mac + " Fehler");
@@ -472,7 +452,7 @@ HostsResponse getHostStatusByMACAddress(const String mac)
 {
     HostsResponse hostsResponse;
     const char emptyStr[2] {0};
-    
+
     hostsResponse.isValid = false;
     strcpy(hostsResponse.active, emptyStr);
     strcpy(hostsResponse.hostName, emptyStr);
@@ -486,8 +466,7 @@ HostsResponse getHostStatusByMACAddress(const String mac)
 	String call_params[][2] = {{"NewMACAddress", mac}};
 	String reqb[][2] = {{"NewIPAddress", ""}, {"NewActive", ""}, {"NewHostName", ""}, {"NewIndex", ""}};
 	// RoSchmi
-    if(connection.action(service, "GetSpecificHostEntry", call_params, 1, reqb, 4))
-    //if(connection.action("Hosts:1", "GetSpecificHostEntry", params, 1, req, 2))
+    if(connection.action(service, "GetSpecificHostEntry", call_params, 1, reqb, 4))   
     { 
         strncpy(hostsResponse.macAddress, mac.c_str(), sizeof(hostsResponse.macAddress) -1);
         strncpy(hostsResponse.ipAddress, reqb[0][1].c_str(), sizeof(hostsResponse.ipAddress) - 1);
@@ -528,7 +507,6 @@ HostsResponse getHostStatusByIndex(int index)
     return hostsResponse;
 }
 
-
 // index may be from 0 to 100000, outHostName is the result
 bool GetHostNameByIndex(int index, char * outHostName, int maxHostNameLength)
 {
@@ -548,15 +526,6 @@ bool GetHostNameByIndex(int index, char * outHostName, int maxHostNameLength)
     Serial.println(outHostName);
     return result;
 }
-
-/*
-bool CheckHostByMacIsActive(const char * testMAC)
-{
-    return true;
-}
-*/
-
-
 
   //  Rundruffunktion über TR064 an der Fritzbox auslösen
 void WahlRundruf() {

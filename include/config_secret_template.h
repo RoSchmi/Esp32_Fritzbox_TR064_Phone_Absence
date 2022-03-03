@@ -21,19 +21,7 @@
 #define FRITZ_DEVICE_AIN_03 ""
 #define FRITZ_DEVICE_AIN_04 ""
 
-// Sinric Pro
-#define APP_KEY           "242688e5-f6cd-4198-8d15-0f3b248b516b"      // Should look like "de0bxxxx-1x3x-4x3x-ax2x-5dabxxxxxxxx"
-#define APP_SECRET        "a5d18bbe-a618-4739-817b-7463f5b17b90-c58b4bf6-d4eb-41d4-7627-fe22133a4c24"   // Should look like "5f36xxxx-x3x7-4x3x-xexe-e86724a9xxxx-4c4axxxx-3x3x-x5xe-x9x3-333d65xxxxxx"
-
-#define SWITCH_ID_1       "60312cabac571b02bba7481e"    // Should look like "5dc1564130xxxxxxxxxxxxxx"
-#define SWITCH_ID_2       "62cc4c77595fcd5c83537e0e"    // Should look like "5dc1564130xxxxxxxxxxxxxx"
-//#define SWITCH_ID_3     ""                            // Should look like "5dc1564130xxxxxxxxxxxxxx"
-//#define SWITCH_ID_4     ""                            // Should look like "5dc1564130xxxxxxxxxxxxxx"    
-
-#define POWERSENSOR_ID_1 "629b6e0d0e81611720f546e7"    // Should look like "5dc1564130xxxxxxxxxxxxxx"
-//#define POWERSENSOR_ID_2 "619b6e0e0e8d611820f556d3"    // Should look like "5dc1564130xxxxxxxxxxxxxx"
-
-// MAC-Addresses of different devices (max 4) of different users (max 4)
+// MAC-Addresses of different devices (max 3) of different users (max 4)
 // Set empty string if not available
 
 #define MAX_NUMBER_OF_USERS 4   // Don't change, otherwise code has to be changed
