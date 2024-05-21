@@ -8,7 +8,7 @@
 //
 // Uses a modification of the following library:
 // https://github.com/Aypac/Arduino-TR-064-SOAP-Library
-// https://github.com/RoSchmi/Arduino-TR-064-SOAP-Library/tree/devRoSchmiPr1
+// https://github.com/RoSchmi/Esp32_TR064_SOAP_Library
 
 // Some settings which have to be made on the Fritzbox can be found here:
 // https://www.schlaue-huette.de/apis-co/fritz-tr064/
