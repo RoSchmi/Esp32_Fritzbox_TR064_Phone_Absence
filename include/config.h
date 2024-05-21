@@ -29,9 +29,9 @@
 // httpsInsec (1) means: https via port 49443 without rootCa validation
 // https (2) means: https via port 49443 with rootCa validation
 
-//#define TRANSPORT_PROTOCOL 0        // 0 = http, 1 = httpsInsec, 2 = https
+#define TRANSPORT_PROTOCOL 0        // 0 = http, 1 = httpsInsec, 2 = https
 //#define TRANSPORT_PROTOCOL 1      // 0 = http, 1 = httpsInsec, 2 = https
-#define TRANSPORT_PROTOCOL 2      // 0 = http, 1 = httpsInsec, 2 = https
+//#define TRANSPORT_PROTOCOL 2      // 0 = http, 1 = httpsInsec, 2 = https
                                     // should be 1 or 2 for normal operation and 0 for testing
 // Not yet implemented                                  
 #define WORK_WITH_WATCHDOG 0        // 1 = yes, 0 = no, Watchdog is used (1) or not used (0)
