@@ -101,6 +101,10 @@ const char* IP = FRITZ_IP_ADDRESS;
 	TR064 connection(PORT, IP, fuser, fpass, protocol, myX509Certificate);
 #endif
 
+// Set flag if switching of powersocket shall be performed
+#define USE_POWERSOCKETS 0
+//#define USE_POWERSOCKETS 1
+
 // The AIN of the DECT!200 powersocket can be found in the FritzBox Webinterface
 // or on the device itself.
 // const String Steckdose1 = "12345 0123456"; (exactly this format - 5 digits, then space, then 7 digits )
@@ -238,6 +242,7 @@ void loop() {
         {   
             if (Serial) Serial.printf("At least one Device of User_%d is present.\n\n", i);
             
+            #if USE_POWERSOCKETS == 1    // Only when powersockets shall be used
             if (i == 0)  // example: for powerSocket and device with ID = 0
             {
                 if (powerSocketStates[i] != onlineUsers[i])
@@ -247,10 +252,13 @@ void loop() {
                     Serial.println("Switched on\n");
                 }
             }
+            #endif
         }
         else        // state of all devices of this user is inactive
         {
             if (Serial) Serial.printf("All Devices of User_%d are absent.\n\n", i);
+            
+            #if USE_POWERSOCKETS == 1  // Only when powersockets shall be used
             if (i == 0)  // example: for powerSocket and device with ID = 0
             {
                 if (powerSocketStates[i] != onlineUsers[i])
@@ -260,6 +268,7 @@ void loop() {
                     Serial.println("Switched off\n");
                 }
             }
+            #endif
         }
     }
 
