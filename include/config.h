@@ -22,6 +22,7 @@
 
 // Choose used debug level here
 #define SELECTED_DEBUG_LEVEL   _DEBUG_ERROR
+//#define SELECTED_DEBUG_LEVEL   _DEBUG_VERBOSE
 
 // Set transport protocol here: (httpsInsec and https only working on Esp32)
 // http (0) means: normal http via port 49000
@@ -47,7 +48,7 @@
 // Open the certificate with 'Editor' and add double quotes as can be seen here
 // Each FritzBox can have its specific certificate
 
-
+/*
 const char *myfritzbox_root_ca =
 "-----BEGIN CERTIFICATE-----\n"
 "MIID2DCCAsCgAwIBAgIJAOReByhZW+7gMA0GCSqGSIb3DQEBCwUAMCcxJTAjBgNV\n"
@@ -72,5 +73,35 @@ const char *myfritzbox_root_ca =
 "+Zr7KKh3XDhhBF43/TncYKPqm5uOLHlITivzQ8BTH0pPUujQwa0j+szGftuBjjHw\n"
 "xMX1RtE24A1Pi28qtRu/DbA1nbsj4gy4ymh4vA==\n"
 "-----END CERTIFICATE-----";
+*/
+
+//Certificate No 2
+
+const char *myfritzbox_root_ca =
+"-----BEGIN CERTIFICATE-----\n"
+"MIID+TCCAuGgAwIBAgIUBMTzm8qN19UC3UJmmH9QJySC16wwDQYJKoZIhvcNAQEL\n"
+"BQAwJzElMCMGA1UEAxMcenFudXphZWl4d203dmtzaC5teWZyaXR6Lm5ldDAeFw0y\n"
+"MzEwMDkyMzM1MTFaFw0zODAxMTUyMzM1MTFaMCcxJTAjBgNVBAMTHHpxbnV6YWVp\n"
+"eHdtN3Zrc2gubXlmcml0ei5uZXQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK\n"
+"AoIBAQDYFzxxDFcK8DWr3wCJBZgEtIxAYoQCQC5HyFSczwwoD9x/wWg0hSMUat1/\n"
+"5yVO1RGjhJmUDHEl0AXma3Kv4f+EpRDwVgVie8r6mf2AvhSGOyAYCaY750hRA7eP\n"
+"7vNBJ2D5F7w04syLfTAIb4UiDZfoKWRQcKylwvEpP8q7VZyQp4jOB9iLCG1UeUSU\n"
+"kgi9+0idSYhpA+ACaKeGZZnut3RTxVTC3oeAMa2vd+Tj7gpzc4OEedF5bPIfhXI2\n"
+"M2lu0/p7/qHhBe7NqEvTNaArCpPmPz4089QZ/TI+4vTkGxDDwfT5dc2vVdZqB901\n"
+"sSJQ0C9wBUOdhnn9qARQ0z3cepIzAgMBAAGjggEbMIIBFzAdBgNVHQ4EFgQUAmey\n"
+"fi8cXhiuVOaICrt320D1PoswYgYDVR0jBFswWYAUAmeyfi8cXhiuVOaICrt320D1\n"
+"PouhK6QpMCcxJTAjBgNVBAMTHHpxbnV6YWVpeHdtN3Zrc2gubXlmcml0ei5uZXSC\n"
+"FATE85vKjdfVAt1CZph/UCckgtesMAwGA1UdEwQFMAMBAf8wgYMGA1UdEQR8MHqC\n"
+"HHpxbnV6YWVpeHdtN3Zrc2gubXlmcml0ei5uZXSCCWZyaXR6LmJveIINd3d3LmZy\n"
+"aXR6LmJveIILbXlmcml0ei5ib3iCD3d3dy5teWZyaXR6LmJveIIIUm9CbzY2OTCC\n"
+"CWZyaXR6Lm5hc4INd3d3LmZyaXR6Lm5hczANBgkqhkiG9w0BAQsFAAOCAQEAwNNN\n"
+"QRkzgcSUY7HcbPFa1rNLtebLNkpe5NJZCkduU3CUyAr0pUK6ZAtVGevippzcDGlD\n"
+"cZqic6bJ4/uSj4TJFWR/feM0wnCxbJzpisdc12aC63mKIyWT+xtHc1qDcsJPdzdG\n"
+"YL7T49LZKg72OcDBgpKbS2/RXD/G45mxPINPpR/v3ZsTQAgrXt/eFjeXEX/zd+nF\n"
+"AjU42O8LhwiE2Xw8hlVXcJyBcqdzX5QIOi5mEQy/CeS7L+OrfBNQmkbb6OLPZj3l\n"
+"QOy5U5xMPjUbuDmHuCRLfFKfDT/GpQeG9/AJNbKdp+J/1UUOusT64ImIgsuwjIw3\n"
+"P19RdeerE9mdgOy0VQ==\n"
+"-----END CERTIFICATE-----";
+
 
 #endif // _CONFIG_H
