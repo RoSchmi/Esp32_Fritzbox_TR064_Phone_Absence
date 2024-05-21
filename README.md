@@ -10,7 +10,7 @@ Fritzbox is a Router/DECT phone combination, which can be controlled via TR-064 
 
 The application uses a modification of the following TR-064 library:
 
-https://github.com/Aypac/Arduino-TR-064-SOAP-Library
+https://github.com/RoSchmi/ESP32_TR064_SOAP_Library
 
 The modification allows the use of http and https transmission to access the Fritzbox
 
