@@ -157,10 +157,32 @@ void getStatusOfAllWifi(int numDev);
 bool GetHostNameByIndex(int index, char * outHostName, int maxHostNameLength);
 void serialEvent();
 
+// RoSchmi
+void * StackPtrAtStart;
+void * StackPtrEnd;
+UBaseType_t watermarkStart;
+// RoSchmi
+
 void setup() {
     Serial.begin(115200);
     while(!Serial);
     Serial.println(F("boot..."));
+// RoSchmi  
+void* SpStart = NULL;
+  StackPtrAtStart = (void *)&SpStart;
+  watermarkStart =  uxTaskGetStackHighWaterMark(NULL);
+  StackPtrEnd = StackPtrAtStart - watermarkStart;
+
+  Serial.begin(115200);
+  delay(2000);
+
+  Serial.printf("\r\n\r\nAddress of Stackpointer near start is:  %p \r\n",  (void *)StackPtrAtStart);
+  Serial.printf("End of Stack is near: %p \r\n",  (void *)StackPtrEnd);
+  Serial.printf("Free Stack near start is:  %d \r\n",  (uint32_t)StackPtrAtStart - (uint32_t)StackPtrEnd);
+
+// RoSchmi
+
+
     // Connect to wifi
     ensureWIFIConnection();
     Serial.println(F("WIFI connected..."));
@@ -191,6 +213,10 @@ void setup() {
  
 void loop() {
     ensureWIFIConnection();
+    //RoSchmi
+    void* SpActual = NULL;
+  Serial.printf("Free Stack at actual position is: %d \r\n", (uint32_t)&SpActual - (uint32_t)StackPtrEnd);
+  delay(60000);
 
     /*
     delay(1000);
