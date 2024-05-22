@@ -161,7 +161,6 @@ void setup() {
     Serial.begin(115200);
     while(!Serial);
     Serial.println(F("boot..."));
- 
     // Connect to wifi
     ensureWIFIConnection();
     Serial.println(F("WIFI connected..."));
