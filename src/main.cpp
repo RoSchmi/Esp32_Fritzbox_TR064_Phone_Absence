@@ -41,17 +41,6 @@
 
 #include <tr064.h>
 
-// Default Esp32 stack size of 8192 byte is not enough for some applications.
-// --> configure stack size dynamically from code to 16384
-// https://community.platformio.org/t/esp32-stack-configuration-reloaded/20994/4
-// Patch: Replace C:\Users\thisUser\.platformio\packages\framework-arduinoespressif32\cores\esp32\main.cpp
-// with the file 'main.cpp' from folder 'patches' of this repository, then use the following code to configure stack size
-#if !(USING_DEFAULT_ARDUINO_LOOP_STACK_SIZE)
-  uint16_t USER_CONFIG_ARDUINO_LOOP_STACK_SIZE = 8192;
-  //uint16_t USER_CONFIG_ARDUINO_LOOP_STACK_SIZE = 16384;
-  
-#endif
-
 typedef struct HostsResponse
 {
     bool isValid;
@@ -157,31 +146,10 @@ void getStatusOfAllWifi(int numDev);
 bool GetHostNameByIndex(int index, char * outHostName, int maxHostNameLength);
 void serialEvent();
 
-// RoSchmi
-void * StackPtrAtStart;
-void * StackPtrEnd;
-UBaseType_t watermarkStart;
-// RoSchmi
-
 void setup() {
     Serial.begin(115200);
     while(!Serial);
     Serial.println(F("boot..."));
-// RoSchmi  
-void* SpStart = NULL;
-  StackPtrAtStart = (void *)&SpStart;
-  watermarkStart =  uxTaskGetStackHighWaterMark(NULL);
-  StackPtrEnd = StackPtrAtStart - watermarkStart;
-
-  Serial.begin(115200);
-  delay(2000);
-
-  Serial.printf("\r\n\r\nAddress of Stackpointer near start is:  %p \r\n",  (void *)StackPtrAtStart);
-  Serial.printf("End of Stack is near: %p \r\n",  (void *)StackPtrEnd);
-  Serial.printf("Free Stack near start is:  %d \r\n",  (uint32_t)StackPtrAtStart - (uint32_t)StackPtrEnd);
-
-// RoSchmi
-
 
     // Connect to wifi
     ensureWIFIConnection();
@@ -213,11 +181,7 @@ void* SpStart = NULL;
  
 void loop() {
     ensureWIFIConnection();
-    //RoSchmi
-    void* SpActual = NULL;
-  Serial.printf("Free Stack at actual position is: %d \r\n", (uint32_t)&SpActual - (uint32_t)StackPtrEnd);
-  delay(60000);
-
+    
     /*
     delay(1000);
     GetDeviceInfo(Steckdose1);
